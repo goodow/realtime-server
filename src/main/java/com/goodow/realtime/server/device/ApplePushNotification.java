@@ -19,6 +19,7 @@ import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.response.CollectionResponse;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import com.notnoop.apns.APNS;
@@ -41,7 +42,7 @@ public class ApplePushNotification {
   @Inject
   ServletContext context;
   @Inject
-  ApnsService service;
+  Provider<ApnsService> service;
   @Inject
   GoogleCloudMessaging gcm;
 
@@ -55,7 +56,7 @@ public class ApplePushNotification {
       PayloadBuilder payload = APNS.newPayload().customField("0", message);
       log.info("payload length:" + payload.length());
 
-      service.push(deviceInfo.getDeviceRegistrationID(), payload.build());
+      service.get().push(deviceInfo.getDeviceRegistrationID(), payload.build());
     }
     // Map<String, Date> inactiveDevices = service.getInactiveDevices();
     // inactiveDevices.toString();
