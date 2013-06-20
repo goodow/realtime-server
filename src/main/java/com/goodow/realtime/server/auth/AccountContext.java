@@ -11,18 +11,20 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.server;
+package com.goodow.realtime.server.auth;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.servlet.GuiceServletContextListener;
-import com.google.walkaround.wave.server.GuiceSetup;
+import com.google.inject.servlet.RequestScoped;
 
-public class RealtimeServletContextListener extends GuiceServletContextListener {
+@RequestScoped
+public class AccountContext {
+  private AccountInfo accountInfo;
 
-  @Override
-  protected Injector getInjector() {
-    return Guice.createInjector(new RealtimeApisModule(), new RealtimeServerModule(), GuiceSetup
-        .getRootModule(), GuiceSetup.getServletModule(), new AppEngineModule());
+  public AccountInfo getAccountInfo() {
+    return accountInfo;
   }
+
+  public void setAccountInfo(AccountInfo accountInfo) {
+    this.accountInfo = accountInfo;
+  }
+
 }

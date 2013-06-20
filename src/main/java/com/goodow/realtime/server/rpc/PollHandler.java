@@ -14,14 +14,16 @@
 package com.goodow.realtime.server.rpc;
 
 import com.goodow.realtime.channel.rpc.Constants.Params;
+import com.goodow.realtime.server.auth.AccountContext;
 import com.goodow.realtime.server.model.ObjectId;
-import com.goodow.realtime.server.model.SessionId;
+import com.goodow.realtime.server.model.Session;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.walkaround.slob.server.AccessDeniedException;
 import com.google.walkaround.slob.server.SlobFacilities;
 import com.google.walkaround.slob.server.SlobNotFoundException;
@@ -41,6 +43,8 @@ public class PollHandler extends AbstractHandler {
   SlobFacilities slobFacilities;
   @Inject
   DeltaHandler deltaHandler;
+  @Inject
+  Provider<AccountContext> context;
 
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -71,7 +75,8 @@ public class PollHandler extends AbstractHandler {
       long startRev = array.get(1).getAsLong();
       Long endVersion = array.size() >= 3 ? array.get(2).getAsLong() : null;
 
-      ConnectResult r = store.reconnect(key, new SessionId(sessionId));
+      ConnectResult r =
+          store.reconnect(key, new Session(context.get().getAccountInfo().getUserId(), sessionId));
       if (r.getChannelToken() != null) {
         assert token == null || token.equals(r.getChannelToken());
         token = r.getChannelToken();

@@ -17,13 +17,15 @@ import com.goodow.realtime.channel.rpc.Constants;
 import com.goodow.realtime.channel.rpc.Constants.Params;
 import com.goodow.realtime.model.id.IdGenerator;
 import com.goodow.realtime.operation.util.Pair;
+import com.goodow.realtime.server.auth.AccountContext;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.RealtimeLoader;
-import com.goodow.realtime.server.model.SessionId;
+import com.goodow.realtime.server.model.Session;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.walkaround.slob.server.AccessDeniedException;
 import com.google.walkaround.slob.server.SlobNotFoundException;
 import com.google.walkaround.slob.server.SlobStore.ConnectResult;
@@ -44,6 +46,8 @@ public class SnapshotHandler extends AbstractHandler {
   private RealtimeLoader loader;
   @Inject
   private IdGenerator idGenerator;
+  @Inject
+  private Provider<AccountContext> context;
 
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -56,7 +60,8 @@ public class SnapshotHandler extends AbstractHandler {
     try {
       if (revision == null) {
         String sid = idGenerator.next(15);
-        Pair<ConnectResult, String> pair = loader.load(id, new SessionId(sid), true);
+        Pair<ConnectResult, String> pair =
+            loader.load(id, new Session(context.get().getAccountInfo().getUserId(), sid), true);
         obj = new JsonObject();
         obj.addProperty(Params.SESSION_ID, sid);
         serialize(pair, obj);

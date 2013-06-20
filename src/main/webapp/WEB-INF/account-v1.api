@@ -1,0 +1,249 @@
+{
+  "extends" : "thirdParty.api",
+  "abstract" : false,
+  "root" : "http://realtime.goodow.com/ah/api",
+  "name" : "account",
+  "version" : "v1",
+  "defaultVersion" : false,
+  "adapter" : {
+    "bns" : "https://goodow-realtime.appspot.com/_ah/spi",
+    "deadline" : 10.0,
+    "type" : "lily"
+  },
+  "auth" : {
+    "allowCookieAuth" : false
+  },
+  "frontendLimits" : {
+    "unregisteredUserQps" : -1,
+    "unregisteredQps" : -1,
+    "unregisteredDaily" : -1,
+    "rules" : [ ]
+  },
+  "cacheControl" : {
+    "type" : "no-cache",
+    "maxAge" : 0
+  },
+  "ownerDomain" : "goodow.com",
+  "ownerName" : "Goodow",
+  "packagePath" : "api.services",
+  "methods" : {
+    "account.removeAccountInfo" : {
+      "path" : "accountinfo/{id}",
+      "httpMethod" : "DELETE",
+      "scopes" : [ ],
+      "audiences" : [ ],
+      "clientIds" : [ ],
+      "rosyMethod" : "com.goodow.realtime.server.auth.AccountEndpoint.removeAccountInfo",
+      "request" : {
+        "parameters" : {
+          "id" : {
+            "type" : "string",
+            "required" : true
+          }
+        },
+        "body" : "empty"
+      },
+      "response" : {
+        "body" : "autoTemplate(backendResponse)"
+      }
+    },
+    "account.getAccountInfo" : {
+      "path" : "accountinfo/{id}",
+      "httpMethod" : "GET",
+      "scopes" : [ ],
+      "audiences" : [ ],
+      "clientIds" : [ ],
+      "rosyMethod" : "com.goodow.realtime.server.auth.AccountEndpoint.getAccountInfo",
+      "request" : {
+        "parameters" : {
+          "id" : {
+            "type" : "string",
+            "required" : true
+          }
+        },
+        "body" : "empty"
+      },
+      "response" : {
+        "body" : "autoTemplate(backendResponse)"
+      }
+    },
+    "account.login" : {
+      "path" : "login/{id}/{pwd}",
+      "httpMethod" : "POST",
+      "scopes" : [ ],
+      "audiences" : [ ],
+      "clientIds" : [ ],
+      "rosyMethod" : "com.goodow.realtime.server.auth.AccountEndpoint.login",
+      "request" : {
+        "parameters" : {
+          "id" : {
+            "type" : "string",
+            "required" : true
+          },
+          "pwd" : {
+            "type" : "string",
+            "required" : true
+          }
+        },
+        "body" : "empty"
+      },
+      "response" : {
+        "body" : "autoTemplate(backendResponse)"
+      }
+    },
+    "account.updateAccountInfo" : {
+      "path" : "accountinfo",
+      "httpMethod" : "PUT",
+      "scopes" : [ ],
+      "audiences" : [ ],
+      "clientIds" : [ ],
+      "rosyMethod" : "com.goodow.realtime.server.auth.AccountEndpoint.updateAccountInfo",
+      "request" : {
+        "body" : "autoTemplate(backendRequest)",
+        "bodyName" : "resource"
+      },
+      "response" : {
+        "body" : "autoTemplate(backendResponse)"
+      }
+    },
+    "account.listAccountInfo" : {
+      "path" : "accountinfo",
+      "httpMethod" : "GET",
+      "scopes" : [ ],
+      "audiences" : [ ],
+      "clientIds" : [ ],
+      "rosyMethod" : "com.goodow.realtime.server.auth.AccountEndpoint.listAccountInfo",
+      "request" : {
+        "parameters" : {
+          "cursor" : {
+            "type" : "string",
+            "required" : false
+          },
+          "limit" : {
+            "type" : "int32",
+            "required" : false
+          }
+        },
+        "body" : "empty"
+      },
+      "response" : {
+        "body" : "autoTemplate(backendResponse)"
+      }
+    },
+    "account.insertAccountInfo" : {
+      "path" : "accountinfo",
+      "httpMethod" : "POST",
+      "scopes" : [ ],
+      "audiences" : [ ],
+      "clientIds" : [ ],
+      "rosyMethod" : "com.goodow.realtime.server.auth.AccountEndpoint.insertAccountInfo",
+      "request" : {
+        "body" : "autoTemplate(backendRequest)",
+        "bodyName" : "resource"
+      },
+      "response" : {
+        "body" : "autoTemplate(backendResponse)"
+      }
+    },
+    "account.findByName" : {
+      "path" : "findByName/{name}",
+      "httpMethod" : "POST",
+      "scopes" : [ ],
+      "audiences" : [ ],
+      "clientIds" : [ ],
+      "rosyMethod" : "com.goodow.realtime.server.auth.AccountEndpoint.findByName",
+      "request" : {
+        "parameters" : {
+          "name" : {
+            "type" : "string",
+            "required" : true
+          }
+        },
+        "body" : "empty"
+      },
+      "response" : {
+        "body" : "autoTemplate(backendResponse)"
+      }
+    }
+  },
+  "descriptor" : {
+    "schemas" : {
+      "AccountInfo" : {
+        "id" : "AccountInfo",
+        "type" : "object",
+        "properties" : {
+          "userId" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "token" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionResponse_AccountInfo" : {
+        "id" : "CollectionResponse_AccountInfo",
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "AccountInfo"
+            }
+          },
+          "nextPageToken" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "methods" : {
+      "com.goodow.realtime.server.auth.AccountEndpoint.removeAccountInfo" : {
+        "response" : {
+          "$ref" : "AccountInfo"
+        }
+      },
+      "com.goodow.realtime.server.auth.AccountEndpoint.getAccountInfo" : {
+        "response" : {
+          "$ref" : "AccountInfo"
+        }
+      },
+      "com.goodow.realtime.server.auth.AccountEndpoint.login" : {
+        "response" : {
+          "$ref" : "AccountInfo"
+        }
+      },
+      "com.goodow.realtime.server.auth.AccountEndpoint.updateAccountInfo" : {
+        "request" : {
+          "$ref" : "AccountInfo"
+        },
+        "response" : {
+          "$ref" : "AccountInfo"
+        }
+      },
+      "com.goodow.realtime.server.auth.AccountEndpoint.listAccountInfo" : {
+        "response" : {
+          "$ref" : "CollectionResponse_AccountInfo"
+        }
+      },
+      "com.goodow.realtime.server.auth.AccountEndpoint.insertAccountInfo" : {
+        "request" : {
+          "$ref" : "AccountInfo"
+        },
+        "response" : {
+          "$ref" : "AccountInfo"
+        }
+      },
+      "com.goodow.realtime.server.auth.AccountEndpoint.findByName" : {
+        "response" : {
+          "$ref" : "AccountInfo"
+        }
+      }
+    }
+  }
+}

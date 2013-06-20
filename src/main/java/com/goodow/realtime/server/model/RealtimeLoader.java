@@ -62,14 +62,14 @@ public class RealtimeLoader {
     this.datastore = datastore;
   }
 
-  public void create(final ObjectId id, final SessionId sessionId) throws IOException {
+  public void create(final ObjectId id, final Session session) throws IOException {
     try {
       new RetryHelper().run(new RetryHelper.Body<Void>() {
         @Override
         public Void run() throws RetryableFailure, PermanentFailure {
           CheckedTransaction tx = datastore.beginTransaction();
           try {
-            store.newObject(tx, id, "", createInitOp(sessionId), false);
+            store.newObject(tx, id, "", createInitOp(session), false);
             tx.commit();
           } catch (SlobAlreadyExistsException e) {
             throw new RetryableFailure("Object id collision, retrying: " + id, e);
@@ -86,7 +86,7 @@ public class RealtimeLoader {
     }
   }
 
-  public Pair<ConnectResult, String> load(String key, SessionId sessionId, boolean autoCreate)
+  public Pair<ConnectResult, String> load(String key, Session sessionId, boolean autoCreate)
       throws IOException, AccessDeniedException {
     Preconditions.checkNotNull(key, "Null object key");
     Preconditions.checkNotNull(sessionId, "Null sessionId");
@@ -116,10 +116,10 @@ public class RealtimeLoader {
   }
 
   @SuppressWarnings("unchecked")
-  private List<Delta<String>> createInitOp(SessionId sessionId) {
+  private List<Delta<String>> createInitOp(Session session) {
     @SuppressWarnings("rawtypes")
     RealtimeOperation operation = new RealtimeOperation(NoOp.get());
-    Delta<String> delta = new Delta<String>(sessionId, operation.toString());
+    Delta<String> delta = new Delta<String>(session, operation.toString());
     return Arrays.<Delta<String>> asList(delta);
   }
 
@@ -140,12 +140,12 @@ public class RealtimeLoader {
     }
   }
 
-  private Pair<ConnectResult, String> load(ObjectId id, SessionId sessionId) throws IOException,
+  private Pair<ConnectResult, String> load(ObjectId id, Session session) throws IOException,
       AccessDeniedException, SlobNotFoundException {
     Preconditions.checkNotNull(id, "Null object key");
-    Preconditions.checkNotNull(sessionId, "Null sessionId");
+    Preconditions.checkNotNull(session, "Null sessionId");
 
-    Pair<ConnectResult, String> pair = store.connect(id, sessionId);
+    Pair<ConnectResult, String> pair = store.connect(id, session);
     log.info("load(" + id + "): " + pair.getFirst());
     return pair;
   }

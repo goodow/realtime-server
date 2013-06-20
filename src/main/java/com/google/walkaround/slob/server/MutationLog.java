@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.goodow.realtime.server.model.Delta;
 import com.goodow.realtime.server.model.DeltaRejected;
 import com.goodow.realtime.server.model.ObjectId;
-import com.goodow.realtime.server.model.SessionId;
+import com.goodow.realtime.server.model.Session;
 
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
@@ -118,7 +118,7 @@ public class MutationLog {
         long oldVersion = state.getVersion();
         state.apply(delta);
         DeltaEntry deltaEntry =
-            new DeltaEntry(objectId, oldVersion, new Delta<String>(delta.getSessionId(), delta
+            new DeltaEntry(objectId, oldVersion, new Delta<String>(delta.getSession(), delta
                 .getPayload()));
         stagedDeltaEntries.add(deltaEntry);
         long thisDeltaBytes = estimateSizeBytes(deltaEntry);
@@ -265,8 +265,10 @@ public class MutationLog {
   public static class DefaultDeltaEntityConverter implements DeltaEntityConverter {
     @Override
     public Delta<String> convert(Entity entity) {
-      return new Delta<String>(new SessionId(DatastoreUtil.getExistingProperty(entity,
-          DELTA_CLIENT_ID_PROPERTY, String.class)), DatastoreUtil.getExistingProperty(entity,
+      String uid = DatastoreUtil.getExistingProperty(entity, DELTA_USER_ID_PROPERTY, String.class);
+      String sid =
+          DatastoreUtil.getExistingProperty(entity, DELTA_CLIENT_ID_PROPERTY, String.class);
+      return new Delta<String>(new Session(uid, sid), DatastoreUtil.getExistingProperty(entity,
           DELTA_OP_PROPERTY, Text.class).getValue());
     }
   }
@@ -459,6 +461,8 @@ public class MutationLog {
   static final String DELTA_OVERSIZED_OP_PROPERTY = "op__oversized";
 
   @VisibleForTesting
+  static final String DELTA_USER_ID_PROPERTY = "uid";
+  @VisibleForTesting
   static final String DELTA_CLIENT_ID_PROPERTY = "sid";
 
   @VisibleForTesting
@@ -509,8 +513,10 @@ public class MutationLog {
   }
 
   private static void populateDeltaEntity(DeltaEntry in, Entity out) {
-    DatastoreUtil.setNonNullUnindexedProperty(out, DELTA_CLIENT_ID_PROPERTY, in.data.getSessionId()
-        .getId());
+    DatastoreUtil.setNonNullUnindexedProperty(out, DELTA_USER_ID_PROPERTY,
+        in.data.getSession().userId);
+    DatastoreUtil.setNonNullUnindexedProperty(out, DELTA_CLIENT_ID_PROPERTY,
+        in.data.getSession().sessionId);
     DatastoreUtil.setNonNullUnindexedProperty(out, DELTA_OP_PROPERTY,
         new Text(in.data.getPayload()));
   }
@@ -795,8 +801,9 @@ public class MutationLog {
   }
 
   private long estimateSizeBytes(DeltaEntry deltaEntry) {
-    return estimateSizeBytes(makeDeltaKey(deltaEntry)) + DELTA_CLIENT_ID_PROPERTY.length()
-        + deltaEntry.data.getSessionId().getId().length() + DELTA_OP_PROPERTY.length()
+    return estimateSizeBytes(makeDeltaKey(deltaEntry)) + DELTA_USER_ID_PROPERTY.length()
+        + deltaEntry.data.getSession().userId.length() + DELTA_CLIENT_ID_PROPERTY.length()
+        + deltaEntry.data.getSession().sessionId.length() + DELTA_OP_PROPERTY.length()
         + deltaEntry.data.getPayload().length();
   }
 

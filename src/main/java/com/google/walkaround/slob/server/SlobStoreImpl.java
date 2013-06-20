@@ -18,7 +18,7 @@ import com.goodow.realtime.operation.util.Pair;
 import com.goodow.realtime.server.model.Delta;
 import com.goodow.realtime.server.model.DeltaRejected;
 import com.goodow.realtime.server.model.ObjectId;
-import com.goodow.realtime.server.model.SessionId;
+import com.goodow.realtime.server.model.Session;
 
 import com.google.appengine.api.memcache.Expiration;
 import com.google.common.base.Preconditions;
@@ -108,7 +108,7 @@ public class SlobStoreImpl implements SlobStore {
   }
 
   @Override
-  public Pair<ConnectResult, String> connect(ObjectId slobId, SessionId clientId)
+  public Pair<ConnectResult, String> connect(ObjectId slobId, Session clientId)
       throws SlobNotFoundException, IOException, AccessDeniedException {
     return connectOrReconnect(slobId, clientId, true);
   }
@@ -229,12 +229,12 @@ public class SlobStoreImpl implements SlobStore {
   }
 
   @Override
-  public ConnectResult reconnect(ObjectId slobId, SessionId clientId) throws SlobNotFoundException,
+  public ConnectResult reconnect(ObjectId slobId, Session clientId) throws SlobNotFoundException,
       IOException, AccessDeniedException {
     return connectOrReconnect(slobId, clientId, false).getFirst();
   }
 
-  private Pair<ConnectResult, String> connectOrReconnect(ObjectId slobId, SessionId clientId,
+  private Pair<ConnectResult, String> connectOrReconnect(ObjectId slobId, Session clientId,
       boolean withSnapshot) throws SlobNotFoundException, IOException, AccessDeniedException {
     accessChecker.checkCanRead(slobId);
     String snapshot;

@@ -17,7 +17,7 @@ package com.google.walkaround.slob.server;
 import com.goodow.realtime.operation.util.Pair;
 import com.goodow.realtime.server.model.Delta;
 import com.goodow.realtime.server.model.ObjectId;
-import com.goodow.realtime.server.model.SessionId;
+import com.goodow.realtime.server.model.Session;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -94,7 +94,7 @@ public interface SlobStore {
   /**
    * Provides a connection for dealing with an object, along with a snapshot of the object state.
    */
-  Pair<ConnectResult, String> connect(ObjectId slobId, SessionId clientId)
+  Pair<ConnectResult, String> connect(ObjectId slobId, Session clientId)
       throws SlobNotFoundException, IOException, AccessDeniedException;
 
   // Returns a snapshot. TODO(ohler): make snapshot type a generic parameter or something
@@ -131,7 +131,7 @@ public interface SlobStore {
   /**
    * Connects without returning a snapshot.
    */
-  ConnectResult reconnect(ObjectId slobId, SessionId clientId) throws SlobNotFoundException,
+  ConnectResult reconnect(ObjectId slobId, Session clientId) throws SlobNotFoundException,
       IOException, AccessDeniedException;
 
 }

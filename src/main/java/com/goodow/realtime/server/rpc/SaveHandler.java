@@ -15,13 +15,15 @@ package com.goodow.realtime.server.rpc;
 
 import com.goodow.realtime.channel.rpc.Constants;
 import com.goodow.realtime.channel.rpc.Constants.Params;
+import com.goodow.realtime.server.auth.AccountContext;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.ObjectSession;
-import com.goodow.realtime.server.model.SessionId;
+import com.goodow.realtime.server.model.Session;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.walkaround.slob.server.AccessDeniedException;
 import com.google.walkaround.slob.server.MutateResult;
 import com.google.walkaround.slob.server.ServerMutateRequest;
@@ -46,6 +48,8 @@ public class SaveHandler extends AbstractHandler {
 
   @Inject
   SlobFacilities slobFacilities;
+  @Inject
+  Provider<AccountContext> context;
 
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -56,7 +60,8 @@ public class SaveHandler extends AbstractHandler {
     String deltas = payload.get(Params.CHANGES).toString();
 
     ServerMutateRequest mutateRequest = new ServerMutateRequest();
-    mutateRequest.setSession(new ObjectSession(new ObjectId(key), new SessionId(sid)));
+    mutateRequest.setSession(new ObjectSession(new ObjectId(key), new Session(context.get()
+        .getAccountInfo().getUserId(), sid)));
     mutateRequest.setVersion(version);
     mutateRequest.setDeltas(deltas);
 

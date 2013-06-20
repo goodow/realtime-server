@@ -17,10 +17,6 @@
     </license>
   </licenses>
   
-  <properties>
-    <gae.home>${user.home}/.m2/repository/com/google/appengine/appengine-java-sdk/${gae.version}/appengine-java-sdk/appengine-java-sdk-${gae.version}</gae.home>
-  </properties>
-
   <dependencies>
     <!-- Internal modules -->
     <dependency>
@@ -196,6 +192,7 @@
             <jvmFlag>-Xss10M</jvmFlag>
           </jvmFlags> -->
           <disableUpdateCheck>true</disableUpdateCheck>
+          <address>0.0.0.0</address>
         </configuration>
         <executions>
           <execution>

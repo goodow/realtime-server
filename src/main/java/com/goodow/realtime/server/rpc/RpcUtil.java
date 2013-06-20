@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 // a more specific name.
 public class RpcUtil {
 
+  public static final String ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
   public static final String ORIGIN = "origin";
 
   /**
@@ -66,7 +67,8 @@ public class RpcUtil {
       throw new IllegalArgumentException("Bad JSON: " + str, e);
     }
     resp.setContentType("application/json");
-    resp.setHeader("Access-Control-Allow-Origin", req.getHeader(ORIGIN));
+    // resp.setHeader("Access-Control-Allow-Origin", req.getHeader(ORIGIN));
+    resp.setHeader(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
     resp.setHeader("Access-Control-Expose-Headers", "Content-Length,Content-Type,X-Restart");
     resp.getWriter().print(Constants.XSSI_PREFIX + str);
   }

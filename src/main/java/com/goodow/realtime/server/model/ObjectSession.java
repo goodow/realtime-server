@@ -19,11 +19,11 @@ import com.google.common.base.Preconditions;
 public class ObjectSession {
 
   private final ObjectId objectId;
-  private final SessionId sessionId;
+  private final Session session;
 
-  public ObjectSession(ObjectId objectId, SessionId sessionId) {
+  public ObjectSession(ObjectId objectId, Session sessionId) {
     this.objectId = Preconditions.checkNotNull(objectId, "Null objectId");
-    this.sessionId = Preconditions.checkNotNull(sessionId, "Null clientId");
+    this.session = Preconditions.checkNotNull(sessionId, "Null clientId");
   }
 
   @Override
@@ -35,24 +35,24 @@ public class ObjectSession {
       return false;
     }
     ObjectSession other = (ObjectSession) o;
-    return Objects.equal(objectId, other.objectId) && Objects.equal(sessionId, other.sessionId);
+    return Objects.equal(objectId, other.objectId) && Objects.equal(session, other.session);
   }
 
   public ObjectId getObjectId() {
     return objectId;
   }
 
-  public SessionId getSessionId() {
-    return sessionId;
+  public Session getSession() {
+    return session;
   }
 
   @Override
   public final int hashCode() {
-    return Objects.hashCode(objectId, sessionId);
+    return Objects.hashCode(objectId, session);
   }
 
   @Override
   public String toString() {
-    return "ObjectSession(" + objectId + ", " + sessionId + ")";
+    return "ObjectSession(" + objectId + ", " + session + ")";
   }
 }

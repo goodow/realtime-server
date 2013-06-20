@@ -49,14 +49,14 @@ public class DeltaSerializer {
     try {
       json.add(payloadJson);
       Preconditions.checkArgument(resultingRevision >= 0, "invalid rev %s", resultingRevision);
-      json.add(new JsonPrimitive("fake user"));
+      json.add(new JsonPrimitive(data.getSession().userId));
       json.add(new JsonPrimitive(resultingRevision));
       long sanityCheck = json.get(2).getAsLong();
       if (sanityCheck != resultingRevision) {
         throw new AssertionError("resultingRevision " + resultingRevision
             + " not losslessly represented in JSON, got back " + sanityCheck);
       }
-      json.add(new JsonPrimitive(data.getSessionId().getId()));
+      json.add(new JsonPrimitive(data.getSession().sessionId));
       return json;
     } catch (JsonParseException e) {
       throw new Error(e);

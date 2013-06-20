@@ -12,3 +12,4 @@ target/
 datanucleus.log
 *.jks
 flags.json
+*.api

@@ -22,7 +22,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.goodow.realtime.server.device.ApplePushNotification;
 import com.goodow.realtime.server.model.ObjectId;
-import com.goodow.realtime.server.model.SessionId;
+import com.goodow.realtime.server.model.Session;
 
 import com.google.appengine.api.channel.ChannelFailureException;
 import com.google.appengine.api.channel.ChannelMessage;
@@ -81,9 +81,9 @@ public class SlobMessageRouter {
     private static final long serialVersionUID = 144800949601544909L;
 
     private final ListenerKey key;
-    private final SessionId clientId;
+    private final Session clientId;
 
-    private ListenerAlreadyPresent(ListenerKey key, SessionId clientId) {
+    private ListenerAlreadyPresent(ListenerKey key, Session clientId) {
       super(key + " " + clientId);
       this.key = key;
       this.clientId = clientId;
@@ -130,8 +130,8 @@ public class SlobMessageRouter {
 
   private static final String LISTENER_MEMCACHE_TAG = "ORL";
   private static final String CLIENTS_MEMCACHE_TAG = "ORC";
-  private final MemcacheTable<ListenerKey, SessionId> objectListeners;
-  private final MemcacheTable<SessionId, String> clientTokens;
+  private final MemcacheTable<ListenerKey, Session> objectListeners;
+  private final MemcacheTable<Session, String> clientTokens;
   private final ChannelService channelService;
   private final int expirationSeconds;
 
@@ -155,7 +155,7 @@ public class SlobMessageRouter {
    * one token, even if it is listening to multiple objects. The router keeps track of this, and
    * will return the client's existing token if it already has one.
    */
-  public String connectListener(ObjectId objectId, SessionId clientId)
+  public String connectListener(ObjectId objectId, Session clientId)
       throws TooManyListenersException {
     log.info("Connecting " + clientId + " to " + objectId);
 
@@ -209,17 +209,17 @@ public class SlobMessageRouter {
     } else {
       log.info("Publishing " + object + " " + jsonString);
     }
-    Map<?, SessionId> takenMappings = getMappings(object);
-    for (SessionId listener : takenMappings.values()) {
+    Map<?, Session> takenMappings = getMappings(object);
+    for (Session listener : takenMappings.values()) {
       sendData(listener, jsonString);
     }
   }
 
-  private int getFreeKeyForListener(ObjectId object, SessionId clientId)
+  private int getFreeKeyForListener(ObjectId object, Session clientId)
       throws TooManyListenersException, ListenerAlreadyPresent {
-    Map<ListenerKey, SessionId> takenMappings = getMappings(object);
+    Map<ListenerKey, Session> takenMappings = getMappings(object);
 
-    for (Map.Entry<ListenerKey, SessionId> entry : takenMappings.entrySet()) {
+    for (Map.Entry<ListenerKey, Session> entry : takenMappings.entrySet()) {
       if (clientId.equals(entry.getValue())) {
         throw new ListenerAlreadyPresent(entry.getKey(), entry.getValue());
       }
@@ -236,7 +236,7 @@ public class SlobMessageRouter {
     throw new TooManyListenersException(object + " has too many listeners");
   }
 
-  private Map<ListenerKey, SessionId> getMappings(ObjectId object) {
+  private Map<ListenerKey, Session> getMappings(ObjectId object) {
     Set<ListenerKey> keys = Sets.newHashSet();
     for (int i = 0; i < MAX_LISTENERS; i++) {
       keys.add(new ListenerKey(object, i));
@@ -244,10 +244,10 @@ public class SlobMessageRouter {
     return objectListeners.getAll(keys);
   }
 
-  private void sendData(SessionId clientId, String data) {
+  private void sendData(Session clientId, String data) {
     log.info("Sending to " + clientId + ", " + Util.abbrev(data, 50));
     try {
-      channelService.sendMessage(new ChannelMessage(clientId.getId(), data));
+      channelService.sendMessage(new ChannelMessage(clientId.sessionId, data));
     } catch (ChannelFailureException e) {
       // Channel service is best-effort anyway, so it's safe to discard the
       // exception after taking note of it.
@@ -255,7 +255,7 @@ public class SlobMessageRouter {
     }
   }
 
-  private String tokenFor(SessionId sessionId) {
+  private String tokenFor(Session sessionId) {
     String existing = clientTokens.get(sessionId);
     if (existing != null) {
       log.info("Got existing token for client " + sessionId + ": " + existing);
@@ -264,7 +264,7 @@ public class SlobMessageRouter {
 
     // This might screw up a concurrent attempt to do the same thing but
     // doesn't really matter.
-    String token = channelService.createChannel(sessionId.getId());
+    String token = channelService.createChannel(sessionId.sessionId);
     clientTokens.put(sessionId, token);
 
     log.info("Got new token for client " + sessionId + ": " + token);

@@ -21,14 +21,17 @@ import java.io.Serializable;
 /**
  * A client ID. See walkaround.proto for more information.
  */
-public final class SessionId implements Serializable {
+public final class Session implements Serializable {
   private static final long serialVersionUID = 897917221735180820L;
 
-  private final String id;
+  public final String userId;
+  public final String sessionId;
 
-  public SessionId(String sid) {
-    Preconditions.checkNotNull(sid, "Null id");
-    this.id = sid;
+  public Session(String userId, String sessionId) {
+    Preconditions.checkNotNull(userId, "Null user id");
+    Preconditions.checkNotNull(sessionId, "Null session id");
+    this.userId = userId;
+    this.sessionId = sessionId;
   }
 
   @Override
@@ -36,24 +39,20 @@ public final class SessionId implements Serializable {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof SessionId)) {
+    if (!(o instanceof Session)) {
       return false;
     }
-    SessionId other = (SessionId) o;
-    return Objects.equal(id, other.id);
-  }
-
-  public String getId() {
-    return id;
+    Session other = (Session) o;
+    return Objects.equal(userId, other.userId) && Objects.equal(sessionId, other.sessionId);
   }
 
   @Override
   public final int hashCode() {
-    return Objects.hashCode(id);
+    return Objects.hashCode(sessionId);
   }
 
   @Override
   public String toString() {
-    return "SessionId(" + id + ")";
+    return "Session(" + userId + "," + sessionId + ")";
   }
 }

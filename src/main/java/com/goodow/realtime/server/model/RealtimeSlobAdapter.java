@@ -48,7 +48,9 @@ public class RealtimeSlobAdapter implements SlobModel {
       RealtimeOperation<?> op;
       try {
         JsonValue serialized = Json.instance().parse(change.getPayload());
-        op = transformer.createOperation(serialized, "fake user", change.getSessionId().getId());
+        op =
+            transformer.createOperation(serialized, change.getSession().userId,
+                change.getSession().sessionId);
       } catch (JsonException e) {
         throw new DeltaRejected("Malformed op: " + change, e);
       }
@@ -111,7 +113,9 @@ public class RealtimeSlobAdapter implements SlobModel {
       try {
         Delta<String> delta = changes.get(i);
         JsonValue serialized = Json.instance().parse(delta.getPayload());
-        op = transformer.createOperation(serialized, "fake user", delta.getSessionId().toString());
+        op =
+            transformer.createOperation(serialized, delta.getSession().userId,
+                delta.getSession().sessionId);
       } catch (JsonException e) {
         throw new DeltaRejected(e);
       }

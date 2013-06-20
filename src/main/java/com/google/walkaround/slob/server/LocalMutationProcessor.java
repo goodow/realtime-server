@@ -19,7 +19,7 @@ import com.goodow.realtime.server.model.Delta;
 import com.goodow.realtime.server.model.DeltaRejected;
 import com.goodow.realtime.server.model.DeltaSerializer;
 import com.goodow.realtime.server.model.ObjectId;
-import com.goodow.realtime.server.model.SessionId;
+import com.goodow.realtime.server.model.Session;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -270,13 +270,13 @@ public class LocalMutationProcessor implements MutationProcessor {
 
   private class Update {
     private final ObjectId objectId;
-    private final SessionId clientId;
+    private final Session clientId;
     private final long version;
     // Payloads kept in addition to changes for the common non-transform case,
     // and to avoid redundant info in toString().
     private final ImmutableList<String> payloads;
 
-    public Update(ObjectId id, SessionId clientId, long version, List<String> payloads) {
+    public Update(ObjectId id, Session clientId, long version, List<String> payloads) {
       Preconditions.checkArgument(version >= 0, "Bad version %s", version);
       this.objectId = Preconditions.checkNotNull(id, "Null id");
       this.clientId = Preconditions.checkNotNull(clientId, "Null clientId");
@@ -403,7 +403,7 @@ public class LocalMutationProcessor implements MutationProcessor {
     Preconditions.checkArgument(!req.getPayload().isEmpty(), "Empty payload list");
 
     Update update =
-        new Update(objectId, req.getSession().getSessionId(), req.getVersion(), req.getPayload());
+        new Update(objectId, req.getSession().getSession(), req.getVersion(), req.getPayload());
     log.info("mutateObject, update=" + update);
 
     UpResult result;

@@ -31,13 +31,13 @@ import com.google.common.base.Preconditions;
  */
 public final class Delta<T> {
 
-  private final SessionId sessionId;
+  private final Session session;
   private final T payload;
 
-  public Delta(SessionId sessionId, T payload) {
+  public Delta(Session sessionId, T payload) {
     Preconditions.checkNotNull(sessionId, "Null sessionId");
     Preconditions.checkNotNull(payload, "Null payload");
-    this.sessionId = sessionId;
+    this.session = sessionId;
     this.payload = payload;
   }
 
@@ -50,24 +50,24 @@ public final class Delta<T> {
       return false;
     }
     Delta<?> other = (Delta<?>) o;
-    return Objects.equal(sessionId, other.sessionId) && Objects.equal(payload, other.payload);
+    return Objects.equal(session, other.session) && Objects.equal(payload, other.payload);
   }
 
   public T getPayload() {
     return payload;
   }
 
-  public SessionId getSessionId() {
-    return sessionId;
+  public Session getSession() {
+    return session;
   }
 
   @Override
   public final int hashCode() {
-    return Objects.hashCode(sessionId, payload);
+    return Objects.hashCode(session, payload);
   }
 
   @Override
   public String toString() {
-    return "Delta(" + sessionId + ", " + payload + ")";
+    return "Delta(" + session + ", " + payload + ")";
   }
 }

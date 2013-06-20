@@ -13,7 +13,8 @@
  */
 package com.goodow.realtime.server;
 
-import com.goodow.realtime.channel.rpc.Constants;
+import com.goodow.realtime.channel.rpc.Constants.Services;
+import com.goodow.realtime.server.auth.RpcAuthFilter;
 import com.goodow.realtime.server.rpc.DeltaHandler;
 import com.goodow.realtime.server.rpc.PollHandler;
 import com.goodow.realtime.server.rpc.RevisionHandler;
@@ -48,6 +49,7 @@ import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.internal.Utilities;
 
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -66,11 +68,9 @@ public class RealtimeServletModule extends ServletModule {
   private static final ImmutableMap<String, Class<? extends AbstractHandler>> EXACT_PATH_HANDLERS =
       new ImmutableMap.Builder<String, Class<? extends AbstractHandler>>()
       // Endpoints for RPCs etc.
-          .put("/" + Constants.Services.SNAPSHOT, SnapshotHandler.class).put(
-              "/" + Constants.Services.DELTA, DeltaHandler.class).put(
-              "/" + Constants.Services.REVISION, RevisionHandler.class).put(
-              "/" + Constants.Services.POLL, PollHandler.class).put("/" + Constants.Services.SAVE,
-              SaveHandler.class)
+          .put("/" + Services.SNAPSHOT, SnapshotHandler.class).put("/" + Services.DELTA,
+              DeltaHandler.class).put("/" + Services.REVISION, RevisionHandler.class).put(
+              "/" + Services.POLL, PollHandler.class).put("/" + Services.SAVE, SaveHandler.class)
 
           // Backend servers. Could potentially use a separate Guice module.
           .put("/" + AffinityMutationProcessor.PATH, StoreMutateHandler.class)
@@ -153,10 +153,10 @@ public class RealtimeServletModule extends ServletModule {
     bind(AppstatsServlet.class).in(Singleton.class);
     serve("/admin/appstats*").with(AppstatsServlet.class);
 
-    // for (String path : Arrays.asList("/connect", "/submitdelta", "/channel", "/history",
-    // "/contacts", "/photos")) {
-    // filter(path).through(RpcAuthFilter.class);
-    // }
+    for (String path : Arrays.asList(Services.SNAPSHOT, Services.DELTA, Services.POLL,
+        Services.REVISION, Services.SAVE)) {
+      filter("/" + path).through(RpcAuthFilter.class);
+    }
   }
 
   @Provides
