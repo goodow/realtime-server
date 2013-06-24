@@ -27,6 +27,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Singleton
@@ -35,6 +36,8 @@ public class RpcAuthFilter implements Filter {
   Provider<AccountContext> context;
   @Inject
   AccountEndpoint accountEndpoint;
+  private static final String AUTHORIZATION_KEY = "Authorization";
+  private static final String BEARER_PREFIX = "Bearer ";
 
   @Override
   public void destroy() {
@@ -43,8 +46,11 @@ public class RpcAuthFilter implements Filter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
       throws IOException, ServletException {
-    String token = request.getParameter(Params.ACCESS_TOKEN);
-    AccountInfo account = accountEndpoint.findByToken(token);
+    String token = getToken(request);
+    AccountInfo account = null;
+    if (token != null) {
+      account = accountEndpoint.findByToken(token);
+    }
     if (account == null) {
       ((HttpServletResponse) response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       return;
@@ -55,6 +61,18 @@ public class RpcAuthFilter implements Filter {
 
   @Override
   public void init(FilterConfig arg0) throws ServletException {
+  }
+
+  private String getToken(ServletRequest request) {
+    String token = request.getParameter(Params.ACCESS_TOKEN);
+    if (token != null) {
+      return token;
+    }
+    String rawToken = ((HttpServletRequest) request).getHeader(AUTHORIZATION_KEY);
+    if (rawToken != null && rawToken.startsWith(BEARER_PREFIX)) {
+      token = rawToken.substring(BEARER_PREFIX.length());
+    }
+    return token;
   }
 
 }

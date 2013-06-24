@@ -25,10 +25,14 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 @Singleton
 public class LocalDevServerFilter implements Filter {
+
+  private static final String APPLICATION_JSON = "application/json";
 
   @Override
   public void destroy() {
@@ -37,6 +41,16 @@ public class LocalDevServerFilter implements Filter {
   @Override
   public void doFilter(ServletRequest req, ServletResponse resp, FilterChain filterChain)
       throws IOException, ServletException {
+    HttpServletRequest request = (HttpServletRequest) req;
+    if (request.getMethod() == "POST"
+        && !request.getContentType().toLowerCase().startsWith(APPLICATION_JSON)) {
+      req = new HttpServletRequestWrapper(request) {
+        @Override
+        public String getContentType() {
+          return APPLICATION_JSON;
+        }
+      };
+    }
     filterChain.doFilter(req, resp);
     ((HttpServletResponse) resp).setHeader(RpcUtil.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
   }
