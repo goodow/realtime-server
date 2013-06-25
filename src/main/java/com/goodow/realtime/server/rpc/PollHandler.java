@@ -83,8 +83,10 @@ public class PollHandler extends AbstractHandler {
       }
       JsonObject msg = new JsonObject();
       msg.addProperty(Params.ID, key.toString());
-      deltaHandler.fetchDeltas(msg, key, startRev, endVersion);
-      msgs.add(msg);
+      boolean isEmpty = deltaHandler.fetchDeltas(msg, key, startRev, endVersion);
+      if (!isEmpty) {
+        msgs.add(msg);
+      }
     }
     if (token != null) {
       JsonObject tokenMsg = new JsonObject();

@@ -18,6 +18,7 @@ import com.goodow.realtime.server.model.Delta;
 import com.goodow.realtime.server.model.DeltaSerializer;
 import com.goodow.realtime.server.model.ObjectId;
 
+import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -78,13 +79,18 @@ public class DeltaHandler extends AbstractHandler {
     RpcUtil.writeJsonResult(req, resp, toRtn.toString());
   }
 
-  void fetchDeltas(JsonObject obj, ObjectId key, long version, Long endVersion) throws IOException,
-      SlobNotFoundException, AccessDeniedException {
+  boolean fetchDeltas(JsonObject obj, ObjectId key, long version, Long endVersion)
+      throws IOException, SlobNotFoundException, AccessDeniedException {
     SlobStore store = slobFacilities.getSlobStore();
     HistoryResult history = store.loadHistory(key, version, endVersion);
-    obj.add(Params.DELTAS, serializeDeltas(version, history.getData()));
+    ImmutableList<Delta<String>> data = history.getData();
+    obj.add(Params.DELTAS, serializeDeltas(version, data));
+    if (data.isEmpty()) {
+      return true;
+    }
     if (history.hasMore()) {
       obj.addProperty(Params.HAS_MORE, history.hasMore());
     }
+    return false;
   }
 }
