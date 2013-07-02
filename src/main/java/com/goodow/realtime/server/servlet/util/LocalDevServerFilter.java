@@ -42,8 +42,9 @@ public class LocalDevServerFilter implements Filter {
   public void doFilter(ServletRequest req, ServletResponse resp, FilterChain filterChain)
       throws IOException, ServletException {
     HttpServletRequest request = (HttpServletRequest) req;
-    if (request.getMethod() == "POST"
-        && !request.getContentType().toLowerCase().startsWith(APPLICATION_JSON)) {
+    String contentType = request.getContentType();
+    if (request.getMethod() == "POST" && contentType != null
+        && !contentType.toLowerCase().startsWith(APPLICATION_JSON)) {
       req = new HttpServletRequestWrapper(request) {
         @Override
         public String getContentType() {
