@@ -161,7 +161,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
-        <version>2.3</version>
         <configuration>
           <!-- <webXml>${project.build.directory}/generated-sources/appengine-endpoints/WEB-INF/web.xml</webXml> -->
           <!-- <webResources>
@@ -193,6 +192,9 @@
           </jvmFlags> -->
           <disableUpdateCheck>true</disableUpdateCheck>
           <address>0.0.0.0</address>
+          <!-- <serviceClassNames>
+             com.google.appengine.endpoints.SimpleEndpoint
+          </serviceClassNames> -->
         </configuration>
         <executions>
           <execution>
