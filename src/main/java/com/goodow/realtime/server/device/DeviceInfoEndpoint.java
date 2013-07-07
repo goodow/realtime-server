@@ -2,6 +2,7 @@ package com.goodow.realtime.server.device;
 
 import com.goodow.realtime.server.RealtimeApisModule;
 
+import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.config.ApiNamespace;
@@ -20,7 +21,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.Query;
 
-@Api(name = "device", root = RealtimeApisModule.FRONTEND_ROOT, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
+@Api(name = "device", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
 public class DeviceInfoEndpoint {
 
   @Inject

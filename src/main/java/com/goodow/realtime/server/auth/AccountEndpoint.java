@@ -16,6 +16,7 @@ package com.goodow.realtime.server.auth;
 import com.goodow.realtime.model.id.IdGenerator;
 import com.goodow.realtime.server.RealtimeApisModule;
 
+import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.config.ApiNamespace;
@@ -37,7 +38,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
-@Api(name = "account", root = RealtimeApisModule.FRONTEND_ROOT, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
+@Api(name = "account", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
 public class AccountEndpoint {
   @Inject
   Provider<EntityManager> em;
@@ -105,7 +106,7 @@ public class AccountEndpoint {
   }
 
   @ApiMethod(name = "login")
-  public AccountInfo login(@Named("id") String name, @Named("pwd") String pwd) {
+  public AccountInfo login(@Named("name") String name, @Named("pwd") String pwd) {
     AccountInfo account = findByName(name);
     if (account == null || !account.getToken().equals(digest(account.getUserId() + " " + pwd))) {
       return null;

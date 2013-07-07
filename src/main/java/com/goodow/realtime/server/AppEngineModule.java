@@ -29,6 +29,8 @@ import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
+import com.google.appengine.api.prospectivesearch.ProspectiveSearchService;
+import com.google.appengine.api.prospectivesearch.ProspectiveSearchServiceFactory;
 import com.google.appengine.api.search.SearchService;
 import com.google.appengine.api.search.SearchServiceFactory;
 import com.google.appengine.api.urlfetch.URLFetchService;
@@ -38,6 +40,13 @@ import com.google.appengine.api.users.UserServiceFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.walkaround.wave.server.DatastoreTimeoutMillis;
+
+import net.sf.jsr107cache.Cache;
+import net.sf.jsr107cache.CacheException;
+import net.sf.jsr107cache.CacheFactory;
+import net.sf.jsr107cache.CacheManager;
+
+import java.util.Collections;
 
 public class AppEngineModule extends AbstractModule {
 
@@ -58,6 +67,17 @@ public class AppEngineModule extends AbstractModule {
   @Provides
   BlobstoreService provideBlobstoreService() {
     return BlobstoreServiceFactory.getBlobstoreService();
+  }
+
+  @Provides
+  Cache provideCache() {
+    try {
+      CacheFactory cacheFactory = CacheManager.getInstance().getCacheFactory();
+      return cacheFactory.createCache(Collections.emptyMap());
+    } catch (CacheException e) {
+      // ...
+    }
+    return null;
   }
 
   @Provides
@@ -86,6 +106,11 @@ public class AppEngineModule extends AbstractModule {
   @Provides
   MemcacheService provideMemcache() {
     return MemcacheServiceFactory.getMemcacheService();
+  }
+
+  @Provides
+  ProspectiveSearchService provideProspectiveSearchService() {
+    return ProspectiveSearchServiceFactory.getProspectiveSearchService();
   }
 
   @Provides

@@ -20,6 +20,7 @@ import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
 import com.google.android.gcm.server.Result;
 import com.google.android.gcm.server.Sender;
+import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.response.CollectionResponse;
@@ -58,7 +59,7 @@ import javax.persistence.EntityManager;
  * deployed, anyone can access this endpoint! If you'd like to add authentication, take a look at
  * the documentation.
  */
-@Api(name = "device", root = RealtimeApisModule.FRONTEND_ROOT)
+@Api(name = "device", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE)
 // NO AUTHENTICATION; OPEN ENDPOINT!
 public class GoogleCloudMessaging {
   private static final Logger log = Logger.getLogger(GoogleCloudMessaging.class.getName());

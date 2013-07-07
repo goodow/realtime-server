@@ -17,6 +17,7 @@ import com.goodow.realtime.channel.rpc.Constants.Services;
 import com.goodow.realtime.server.auth.RpcAuthFilter;
 import com.goodow.realtime.server.rpc.DeltaHandler;
 import com.goodow.realtime.server.rpc.PollHandler;
+import com.goodow.realtime.server.rpc.PresenceHandler;
 import com.goodow.realtime.server.rpc.RevisionHandler;
 import com.goodow.realtime.server.rpc.SaveHandler;
 import com.goodow.realtime.server.rpc.SnapshotHandler;
@@ -157,6 +158,8 @@ public class RealtimeServletModule extends ServletModule {
         Services.REVISION, Services.SAVE)) {
       filter("/" + path).through(RpcAuthFilter.class);
     }
+
+    serve("/_ah/channel/connected/", "/_ah/channel/disconnected/").with(PresenceHandler.class);
   }
 
   @Provides

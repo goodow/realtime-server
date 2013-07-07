@@ -15,6 +15,7 @@ package com.goodow.realtime.server.device;
 
 import com.goodow.realtime.server.RealtimeApisModule;
 
+import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.response.CollectionResponse;
@@ -32,7 +33,7 @@ import javax.inject.Named;
 import javax.servlet.ServletContext;
 
 @Singleton
-@Api(name = "device", root = RealtimeApisModule.FRONTEND_ROOT)
+@Api(name = "device", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE)
 public class ApplePushNotification {
   private static final Logger log = Logger.getLogger(ApplePushNotification.class.getName());
   private static final String PLATFORM_IOS = "ios";

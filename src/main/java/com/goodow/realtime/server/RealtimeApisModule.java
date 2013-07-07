@@ -17,6 +17,7 @@ import com.goodow.realtime.channel.http.HttpTransport;
 import com.goodow.realtime.server.auth.AccountEndpoint;
 import com.goodow.realtime.server.device.DeviceInfoEndpoint;
 import com.goodow.realtime.server.persist.jpa.JpaFinderProxy;
+import com.goodow.realtime.server.presence.PresenceEndpoint;
 import com.goodow.realtime.server.servlet.util.LocalDevServerFilter;
 import com.goodow.realtime.server.servlet.util.ProxyFilter;
 
@@ -36,6 +37,7 @@ public class RealtimeApisModule extends GuiceSystemServiceServletModule {
   public static final String FRONTEND_ROOT = HttpTransport.DEFAULT + ProxyFilter.PROXY_PATH + "api";
   public static final String BACKENDROOT_ROOT = HttpTransport.DEFAULT + ProxyFilter.PROXY_PATH
       + "spi";
+  public static final String DEFAULT_VERSION = "v0.0.1";
 
   @Override
   protected void configureServlets() {
@@ -53,6 +55,7 @@ public class RealtimeApisModule extends GuiceSystemServiceServletModule {
     Set<Class<?>> serviceClasses = new HashSet<Class<?>>();
     serviceClasses.add(DeviceInfoEndpoint.class);
     serviceClasses.add(AccountEndpoint.class);
+    serviceClasses.add(PresenceEndpoint.class);
     this.serveGuiceSystemServiceServlet("/_ah/spi/*", serviceClasses);
   }
 }
