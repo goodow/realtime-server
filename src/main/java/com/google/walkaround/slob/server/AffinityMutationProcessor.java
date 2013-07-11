@@ -20,7 +20,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import com.goodow.realtime.model.id.IdGenerator;
+import com.goodow.realtime.operation.id.IdGenerator;
 import com.goodow.realtime.operation.util.Pair;
 import com.goodow.realtime.server.model.ObjectId;
 

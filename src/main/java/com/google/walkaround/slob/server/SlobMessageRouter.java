@@ -14,34 +14,19 @@
 
 package com.google.walkaround.slob.server;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-import com.goodow.realtime.server.device.ApplePushNotification;
+import com.goodow.realtime.channel.rpc.Constants;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.Session;
+import com.goodow.realtime.server.presence.MessageRouter;
+import com.goodow.realtime.server.presence.PresenceEndpoint;
 
-import com.google.appengine.api.channel.ChannelFailureException;
-import com.google.appengine.api.channel.ChannelMessage;
 import com.google.appengine.api.channel.ChannelService;
 import com.google.appengine.api.memcache.Expiration;
-import com.google.appengine.api.memcache.MemcacheService.SetPolicy;
-import com.google.common.base.Objects;
-import com.google.common.collect.Sets;
-import com.google.inject.BindingAnnotation;
 import com.google.inject.Inject;
-import com.google.walkaround.util.server.Util;
+import com.google.inject.Provider;
 import com.google.walkaround.util.server.appengine.MemcacheTable;
 
-import java.io.Serializable;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -54,97 +39,23 @@ import java.util.logging.Logger;
  * information to allow clients to deal with these situations.
  */
 public class SlobMessageRouter {
-
-  @BindingAnnotation
-  @Target({FIELD, PARAMETER, METHOD})
-  @Retention(RUNTIME)
-  public @interface SlobChannelExpirationSeconds {
-  }
-
-  public static class TooManyListenersException extends Exception {
-    private static final long serialVersionUID = 455819249880278222L;
-
-    public TooManyListenersException(String message) {
-      super(message);
-    }
-
-    public TooManyListenersException(String message, Throwable cause) {
-      super(message, cause);
-    }
-
-    public TooManyListenersException(Throwable cause) {
-      super(cause);
-    }
-  }
-
-  private static class ListenerAlreadyPresent extends Exception {
-    private static final long serialVersionUID = 144800949601544909L;
-
-    private final ListenerKey key;
-    private final Session clientId;
-
-    private ListenerAlreadyPresent(ListenerKey key, Session clientId) {
-      super(key + " " + clientId);
-      this.key = key;
-      this.clientId = clientId;
-    }
-  }
-
-  private static class ListenerKey implements Serializable {
-    private static final long serialVersionUID = 601407287266649008L;
-
-    private final ObjectId id;
-    private final int listenerNum;
-
-    public ListenerKey(ObjectId id, int listenerNum) {
-      this.id = checkNotNull(id, "Null id");
-      this.listenerNum = listenerNum;
-    }
-
-    @Override
-    public final boolean equals(Object o) {
-      if (o == this) {
-        return true;
-      }
-      if (!(o instanceof ListenerKey)) {
-        return false;
-      }
-      ListenerKey other = (ListenerKey) o;
-      return listenerNum == other.listenerNum && Objects.equal(id, other.id);
-    }
-
-    @Override
-    public final int hashCode() {
-      return Objects.hashCode(id, listenerNum);
-    }
-
-    @Override
-    public String toString() {
-      return "ListenerKey(" + id + ", " + listenerNum + ")";
-    }
-  }
+  private static final int ChannelExpirationSeconds = (int) (1.8 * 60 * 60);
 
   private static final Logger log = Logger.getLogger(SlobMessageRouter.class.getName());
 
-  private static final int MAX_LISTENERS = 51;
-
-  private static final String LISTENER_MEMCACHE_TAG = "ORL";
   private static final String CLIENTS_MEMCACHE_TAG = "ORC";
-  private final MemcacheTable<ListenerKey, Session> objectListeners;
-  private final MemcacheTable<Session, String> clientTokens;
   private final ChannelService channelService;
-  private final int expirationSeconds;
-
-  private final ApplePushNotification apns;
+  private final Map<String, MessageRouter> messageRouters;
+  private final Provider<PresenceEndpoint> presence;
+  private final MemcacheTable<String, String> clientTokens;
 
   @Inject
   public SlobMessageRouter(MemcacheTable.Factory memcacheFactory, ChannelService channelService,
-      @SlobChannelExpirationSeconds int expirationSeconds, ApplePushNotification apns) {
-    this.apns = apns;
-    this.objectListeners = memcacheFactory.create(LISTENER_MEMCACHE_TAG);
+      Map<String, MessageRouter> messageRouters, Provider<PresenceEndpoint> presence) {
     this.clientTokens = memcacheFactory.create(CLIENTS_MEMCACHE_TAG);
+    this.messageRouters = messageRouters;
     this.channelService = channelService;
-    this.expirationSeconds = expirationSeconds;
+    this.presence = presence;
   }
 
   /**
@@ -155,119 +66,38 @@ public class SlobMessageRouter {
    * one token, even if it is listening to multiple objects. The router keeps track of this, and
    * will return the client's existing token if it already has one.
    */
-  public String connectListener(ObjectId objectId, Session clientId)
-      throws TooManyListenersException {
-    log.info("Connecting " + clientId + " to " + objectId);
-
-    int maxAttempts = 10;
-    for (int attempt = 0; attempt < maxAttempts; attempt++) {
-      boolean success;
-      try {
-        int freeId = getFreeKeyForListener(objectId, clientId);
-        assert freeId >= 0 && freeId < MAX_LISTENERS;
-
-        success =
-            objectListeners.put(new ListenerKey(objectId, freeId), clientId, Expiration
-                .byDeltaSeconds(expirationSeconds), SetPolicy.ADD_ONLY_IF_NOT_PRESENT);
-
-        if (success) {
-          log.info("Created new listener: " + clientId);
-        }
-      } catch (ListenerAlreadyPresent e) {
-        // This is just an expiry refresh, ideally we would rather not clobber
-        // a different listener in the unlikely event it got changed in this
-        // brief instant, but that doesn't matter.
-        objectListeners.put(e.key, e.clientId, Expiration.byDeltaSeconds(expirationSeconds),
-            SetPolicy.SET_ALWAYS);
-        success = true;
-        log.info("Refreshed listener: " + e.clientId);
-      }
-
-      if (success) {
-        return tokenFor(clientId);
-      }
-
-      log.info("Failed to create listener, might retry...");
-    }
-
-    log.warning("Max attempts to set a listener exceeded");
-    throw new TooManyListenersException("Max attempts to set a listener exceeded");
+  public String connectListener(ObjectId objectId, Session sessionId) {
+    presence.get().connect(sessionId.sessionId, objectId.toString());
+    return tokenFor(sessionId);
   }
 
   /**
    * Publishes messages to clients listening on an object.
    */
   public void publishMessages(ObjectId object, String jsonString) {
-    apns.pushMessage(jsonString);
-    if (jsonString.length() > 8000) {
-      // Channel API has a limit of 32767 UTF-8 bytes. It's OK for us not to
-      // publish large messages; we can let clients poll. TODO(ohler): 8000 is
-      // probably overly conservative, make a better estimate.
-      log.warning(object + ": Message too large (" + jsonString.length()
-          + " chars), not publishing: " + jsonString);
-      return;
-    } else {
-      log.info("Publishing " + object + " " + jsonString);
+    for (MessageRouter messageRouter : messageRouters.values()) {
+      messageRouter.push(object.toString(), jsonString);
     }
-    Map<?, Session> takenMappings = getMappings(object);
-    for (Session listener : takenMappings.values()) {
-      sendData(listener, jsonString);
-    }
+    log.info("Publishing " + object + " " + jsonString);
   }
 
-  private int getFreeKeyForListener(ObjectId object, Session clientId)
-      throws TooManyListenersException, ListenerAlreadyPresent {
-    Map<ListenerKey, Session> takenMappings = getMappings(object);
-
-    for (Map.Entry<ListenerKey, Session> entry : takenMappings.entrySet()) {
-      if (clientId.equals(entry.getValue())) {
-        throw new ListenerAlreadyPresent(entry.getKey(), entry.getValue());
-      }
+  private String tokenFor(Session session) {
+    String sessionId = session.sessionId;
+    if (sessionId.charAt(0) != Constants.WEB) {
+      return null;
     }
-
-    // MAX_LISTENERS is small, and we need to iterate up to it anyway
-    // in getMappings()
-    for (int i = 0; i < MAX_LISTENERS; i++) {
-      if (!takenMappings.containsKey(new ListenerKey(object, i))) {
-        return i;
-      }
-    }
-
-    throw new TooManyListenersException(object + " has too many listeners");
-  }
-
-  private Map<ListenerKey, Session> getMappings(ObjectId object) {
-    Set<ListenerKey> keys = Sets.newHashSet();
-    for (int i = 0; i < MAX_LISTENERS; i++) {
-      keys.add(new ListenerKey(object, i));
-    }
-    return objectListeners.getAll(keys);
-  }
-
-  private void sendData(Session clientId, String data) {
-    log.info("Sending to " + clientId + ", " + Util.abbrev(data, 50));
-    try {
-      channelService.sendMessage(new ChannelMessage(clientId.sessionId, data));
-    } catch (ChannelFailureException e) {
-      // Channel service is best-effort anyway, so it's safe to discard the
-      // exception after taking note of it.
-      log.log(Level.SEVERE, "Channel service failed for " + clientId, e);
-    }
-  }
-
-  private String tokenFor(Session sessionId) {
     String existing = clientTokens.get(sessionId);
     if (existing != null) {
-      log.info("Got existing token for client " + sessionId + ": " + existing);
+      log.info("Got existing token for client " + session + ": " + existing);
       return existing;
     }
 
     // This might screw up a concurrent attempt to do the same thing but
     // doesn't really matter.
-    String token = channelService.createChannel(sessionId.sessionId);
-    clientTokens.put(sessionId, token);
+    String token = channelService.createChannel(sessionId);
+    clientTokens.put(sessionId, token, Expiration.byDeltaSeconds(ChannelExpirationSeconds));
 
-    log.info("Got new token for client " + sessionId + ": " + token);
+    log.info("Got new token for client " + session + ": " + token);
     return token;
   }
 }

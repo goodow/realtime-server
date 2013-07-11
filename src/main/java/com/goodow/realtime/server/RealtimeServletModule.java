@@ -15,9 +15,10 @@ package com.goodow.realtime.server;
 
 import com.goodow.realtime.channel.rpc.Constants.Services;
 import com.goodow.realtime.server.auth.RpcAuthFilter;
+import com.goodow.realtime.server.presence.AppEngineChannelPresenceServlet;
+import com.goodow.realtime.server.presence.PresenceHandler;
 import com.goodow.realtime.server.rpc.DeltaHandler;
 import com.goodow.realtime.server.rpc.PollHandler;
-import com.goodow.realtime.server.rpc.PresenceHandler;
 import com.goodow.realtime.server.rpc.RevisionHandler;
 import com.goodow.realtime.server.rpc.SaveHandler;
 import com.goodow.realtime.server.rpc.SnapshotHandler;
@@ -155,11 +156,14 @@ public class RealtimeServletModule extends ServletModule {
     serve("/admin/appstats*").with(AppstatsServlet.class);
 
     for (String path : Arrays.asList(Services.SNAPSHOT, Services.DELTA, Services.POLL,
-        Services.REVISION, Services.SAVE)) {
+        Services.REVISION, Services.SAVE, Services.PRESENCE_CONNECT, Services.PRESENCE_DISCONNECT)) {
       filter("/" + path).through(RpcAuthFilter.class);
     }
 
-    serve("/_ah/channel/connected/", "/_ah/channel/disconnected/").with(PresenceHandler.class);
+    serve("/_ah/channel/connected/", "/_ah/channel/disconnected/").with(
+        AppEngineChannelPresenceServlet.class);
+    serve("/" + Services.PRESENCE_CONNECT, "/" + Services.PRESENCE_DISCONNECT).with(
+        PresenceHandler.class);
   }
 
   @Provides

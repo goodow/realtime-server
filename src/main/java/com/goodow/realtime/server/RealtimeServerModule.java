@@ -13,8 +13,13 @@
  */
 package com.goodow.realtime.server;
 
+import com.goodow.realtime.channel.rpc.Constants;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.RealtimeSlobAdapter;
+import com.goodow.realtime.server.presence.AppEngineChannelService;
+import com.goodow.realtime.server.presence.ApplePushNotification;
+import com.goodow.realtime.server.presence.GoogleCloudMessaging;
+import com.goodow.realtime.server.presence.MessageRouter;
 
 import com.google.appengine.api.datastore.Blob;
 import com.google.appengine.api.datastore.Entity;
@@ -28,6 +33,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.walkaround.slob.server.AccessChecker;
@@ -43,7 +49,6 @@ import com.google.walkaround.slob.server.PreCommitAction;
 import com.google.walkaround.slob.server.SlobFacilities;
 import com.google.walkaround.slob.server.SlobFacilitiesImpl;
 import com.google.walkaround.slob.server.SlobLocalCacheExpirationMillis;
-import com.google.walkaround.slob.server.SlobMessageRouter.SlobChannelExpirationSeconds;
 import com.google.walkaround.slob.server.SlobStore;
 import com.google.walkaround.slob.server.SlobStoreImpl;
 import com.google.walkaround.slob.shared.SlobModel;
@@ -112,8 +117,6 @@ public class RealtimeServerModule extends AbstractModule {
 
     bindToFlag(String.class, StoreBackendName.class, FlagName.STORE_SERVER);
     bindToFlag(Integer.class, StoreBackendInstanceCount.class, FlagName.NUM_STORE_SERVERS);
-    bindToFlag(Integer.class, SlobChannelExpirationSeconds.class,
-        FlagName.OBJECT_CHANNEL_EXPIRATION_SECONDS);
     bindToFlag(Integer.class, PostCommitActionIntervalMillis.class,
         FlagName.POST_COMMIT_ACTION_INTERVAL_MILLIS);
     bindToFlag(Integer.class, SlobLocalCacheExpirationMillis.class,
@@ -144,6 +147,12 @@ public class RealtimeServerModule extends AbstractModule {
       public void checkCanRead(ObjectId objectId) {
       }
     });
+
+    MapBinder<String, MessageRouter> uriBinder =
+        MapBinder.newMapBinder(binder(), String.class, MessageRouter.class);
+    uriBinder.addBinding("" + Constants.WEB).to(AppEngineChannelService.class);
+    uriBinder.addBinding("" + Constants.ANDROID).to(GoogleCloudMessaging.class);
+    uriBinder.addBinding("" + Constants.IOS).to(ApplePushNotification.class);
   }
 
   @Provides

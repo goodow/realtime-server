@@ -11,9 +11,8 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.server.rpc;
+package com.goodow.realtime.server.presence;
 
-import com.goodow.realtime.server.presence.PresenceEndpoint;
 
 import com.google.appengine.api.channel.ChannelPresence;
 import com.google.appengine.api.channel.ChannelService;
@@ -29,7 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Singleton
-public class PresenceHandler extends HttpServlet {
+public class AppEngineChannelPresenceServlet extends HttpServlet {
 
   @Inject
   private Provider<PresenceEndpoint> presenceEndpoint;

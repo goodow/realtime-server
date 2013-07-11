@@ -13,9 +13,9 @@
  */
 package com.goodow.realtime.server.model;
 
-import com.goodow.realtime.model.id.IdGenerator;
 import com.goodow.realtime.operation.RealtimeOperation;
 import com.goodow.realtime.operation.basic.NoOp;
+import com.goodow.realtime.operation.id.IdGenerator;
 import com.goodow.realtime.operation.util.Pair;
 
 import com.google.appengine.api.datastore.Entity;

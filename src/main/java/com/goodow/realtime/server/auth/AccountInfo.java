@@ -21,8 +21,9 @@ public class AccountInfo {
   @Id
   private String userId;
   private String name;
-  private String displayName;
   private String token;
+  private String displayName;
+  private String photoUrl;
 
   public String getDisplayName() {
     return displayName;
@@ -30,6 +31,10 @@ public class AccountInfo {
 
   public String getName() {
     return name;
+  }
+
+  public String getPhotoUrl() {
+    return photoUrl;
   }
 
   public String getToken() {
@@ -46,6 +51,10 @@ public class AccountInfo {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public void setPhotoUrl(String photoUrl) {
+    this.photoUrl = photoUrl;
   }
 
   public void setToken(String token) {

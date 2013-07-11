@@ -14,7 +14,7 @@
 package com.goodow.realtime.server.servlet;
 
 import com.goodow.realtime.channel.rpc.Constants.Params;
-import com.goodow.realtime.model.id.IdGenerator;
+import com.goodow.realtime.operation.id.IdGenerator;
 
 import com.google.gson.JsonObject;
 import com.google.walkaround.util.server.servlet.AbstractHandler;

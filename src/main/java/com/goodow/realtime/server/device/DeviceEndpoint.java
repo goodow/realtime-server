@@ -19,13 +19,25 @@ import javax.inject.Named;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 @Api(name = "device", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
-public class DeviceInfoEndpoint {
+public class DeviceEndpoint {
 
   @Inject
   Provider<EntityManager> em;
+
+  @ApiMethod(name = "findBySessionId")
+  public DeviceInfo findBySessionId(@Named("sessionId") String sessionId) {
+    Query query = em.get().createQuery("select from DeviceInfo as d where d.sessionId = ?0");
+    query.setParameter(0, sessionId);
+    try {
+      return (DeviceInfo) query.getSingleResult();
+    } catch (NoResultException e) {
+      return null;
+    }
+  }
 
   /**
    * This method gets the entity having primary key id. It uses HTTP GET method.
@@ -62,8 +74,8 @@ public class DeviceInfoEndpoint {
       @Named("deviceInformation") String deviceInformation,
       @Nullable @Named("timestamp") long timestamp) {
     DeviceInfo deviceinfo = new DeviceInfo();
-    deviceinfo.setDeviceRegistrationID(deviceRegistrationID);
-    deviceinfo.setDeviceInformation(deviceInformation);
+    deviceinfo.setId(deviceRegistrationID);
+    deviceinfo.setInformation(deviceInformation);
     deviceinfo.setTimestamp(timestamp);
     em.get().persist(deviceinfo);
     return deviceinfo;
@@ -151,7 +163,7 @@ public class DeviceInfoEndpoint {
 
   private boolean containsDeviceInfo(DeviceInfo deviceinfo) {
     boolean contains = true;
-    DeviceInfo item = em.get().find(DeviceInfo.class, deviceinfo.getDeviceRegistrationID());
+    DeviceInfo item = em.get().find(DeviceInfo.class, deviceinfo.getId());
     if (item == null) {
       contains = false;
     }

@@ -15,7 +15,7 @@ package com.goodow.realtime.server;
 
 import com.goodow.realtime.channel.http.HttpTransport;
 import com.goodow.realtime.server.auth.AccountEndpoint;
-import com.goodow.realtime.server.device.DeviceInfoEndpoint;
+import com.goodow.realtime.server.device.DeviceEndpoint;
 import com.goodow.realtime.server.persist.jpa.JpaFinderProxy;
 import com.goodow.realtime.server.presence.PresenceEndpoint;
 import com.goodow.realtime.server.servlet.util.LocalDevServerFilter;
@@ -53,7 +53,7 @@ public class RealtimeApisModule extends GuiceSystemServiceServletModule {
     }
 
     Set<Class<?>> serviceClasses = new HashSet<Class<?>>();
-    serviceClasses.add(DeviceInfoEndpoint.class);
+    serviceClasses.add(DeviceEndpoint.class);
     serviceClasses.add(AccountEndpoint.class);
     serviceClasses.add(PresenceEndpoint.class);
     this.serveGuiceSystemServiceServlet("/_ah/spi/*", serviceClasses);

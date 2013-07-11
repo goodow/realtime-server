@@ -42,7 +42,7 @@ public class RpcUtil {
    * 
    * @throws IOException if there is a problem reading the body.
    */
-  static String readRequestBody(HttpServletRequest req) throws IOException {
+  public static String readRequestBody(HttpServletRequest req) throws IOException {
     StringBuilder json = new StringBuilder();
     BufferedReader reader = req.getReader();
     String line;

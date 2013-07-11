@@ -13,12 +13,13 @@
  */
 package com.goodow.realtime.server.auth;
 
-import com.goodow.realtime.model.id.IdGenerator;
+import com.goodow.realtime.operation.id.IdGenerator;
 import com.goodow.realtime.server.RealtimeApisModule;
 
 import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
+import com.google.api.server.spi.config.ApiMethod.HttpMethod;
 import com.google.api.server.spi.config.ApiNamespace;
 import com.google.api.server.spi.response.CollectionResponse;
 import com.google.appengine.api.datastore.Cursor;
@@ -114,7 +115,7 @@ public class AccountEndpoint {
     return account;
   }
 
-  @ApiMethod(name = "removeAccountInfo")
+  @ApiMethod(name = "removeAccountInfo", httpMethod = HttpMethod.POST)
   public AccountInfo removeAccountInfo(@Named("id") String id) {
     AccountInfo account = null;
     account = em.get().find(AccountInfo.class, id);
@@ -122,7 +123,7 @@ public class AccountEndpoint {
     return account;
   }
 
-  @ApiMethod(name = "updateAccountInfo")
+  @ApiMethod(path = "updateAccountInfo", httpMethod = HttpMethod.POST)
   public AccountInfo updateAccountInfo(AccountInfo account) {
     if (!containsAccountInfo(account)) {
       throw new EntityNotFoundException("Object does not exist");

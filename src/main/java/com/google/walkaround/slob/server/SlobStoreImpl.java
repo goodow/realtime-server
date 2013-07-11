@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.walkaround.slob.server.MutationLog.DeltaIterator;
 import com.google.walkaround.slob.server.MutationLog.MutationLogFactory;
-import com.google.walkaround.slob.server.SlobMessageRouter.TooManyListenersException;
 import com.google.walkaround.slob.shared.SlobModel.ReadableSlob;
 import com.google.walkaround.slob.shared.StateAndVersion;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
@@ -276,11 +275,7 @@ public class SlobStoreImpl implements SlobStore {
 
     String channelToken;
     if (clientId != null) {
-      try {
-        channelToken = messageRouter.connectListener(slobId, clientId);
-      } catch (TooManyListenersException e) {
-        channelToken = null;
-      }
+      channelToken = messageRouter.connectListener(slobId, clientId);
     } else {
       channelToken = null;
     }

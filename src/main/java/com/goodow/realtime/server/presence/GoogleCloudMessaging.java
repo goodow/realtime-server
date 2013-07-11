@@ -11,9 +11,11 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.goodow.realtime.server.device;
+package com.goodow.realtime.server.presence;
 
 import com.goodow.realtime.server.RealtimeApisModule;
+import com.goodow.realtime.server.device.DeviceEndpoint;
+import com.goodow.realtime.server.device.DeviceInfo;
 
 import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
@@ -23,14 +25,14 @@ import com.google.android.gcm.server.Sender;
 import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
-import com.google.api.server.spi.response.CollectionResponse;
+import com.google.appengine.api.prospectivesearch.ProspectiveSearchService;
+import com.google.appengine.api.prospectivesearch.Subscription;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,7 +43,7 @@ import javax.persistence.EntityManager;
 /**
  * A simple Cloud Endpoint that receives notifications from a web client (<server url>/index.html),
  * and broadcasts them to all of the devices that were registered with this application (via
- * DeviceInfoEndpoint).
+ * DeviceEndpoint).
  * 
  * In order for this sample to work, you have to populate the API_KEY field with your key for server
  * apps. You can obtain this key from the API console (https://code.google.com/apis/console). You'll
@@ -59,9 +61,10 @@ import javax.persistence.EntityManager;
  * deployed, anyone can access this endpoint! If you'd like to add authentication, take a look at
  * the documentation.
  */
-@Api(name = "device", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE)
+@Singleton
+@Api(name = "presence", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE)
 // NO AUTHENTICATION; OPEN ENDPOINT!
-public class GoogleCloudMessaging {
+public class GoogleCloudMessaging implements MessageRouter {
   private static final Logger log = Logger.getLogger(GoogleCloudMessaging.class.getName());
   /*
    * Fill this in with the server key that you've obtained from the API Console
@@ -69,13 +72,15 @@ public class GoogleCloudMessaging {
    * your AppEngine application even if you are using a App Engine's local development server.
    */
   private static final String API_KEY = "AIzaSyCzZeDPyKkwhbOm9Qc2hC4fHFEkTLoyw6U";
-  private static final String PLATFORM_ANDROID = "android";
 
   @Inject
-  DeviceInfoEndpoint endpoint;
-
+  private DeviceEndpoint endpoint;
   @Inject
-  Provider<EntityManager> em;
+  private Provider<EntityManager> em;
+  @Inject
+  private ProspectiveSearchService service;
+  @Inject
+  private Provider<PresenceUtil> presence;
 
   /**
    * This accepts a message and persists it in the AppEngine datastore, it will also broadcast the
@@ -85,23 +90,37 @@ public class GoogleCloudMessaging {
    * @return
    * @throws IOException
    */
-  @ApiMethod(name = "pushMessageToGcm")
-  public void pushMessageToGcm(@Named("message") String message) {
-    Sender sender = new Sender(API_KEY);
-    // ping a max of 10 registered devices
-    CollectionResponse<DeviceInfo> response = endpoint.listDeviceInfo(null, null, PLATFORM_ANDROID);
-    Collection<DeviceInfo> items = response.getItems();
-    if (items.isEmpty()) {
-      return;
-    }
-    List<String> ids = new ArrayList<String>();
-    for (DeviceInfo deviceInfo : items) {
-      ids.add(deviceInfo.getDeviceRegistrationID());
-    }
-
+  @Override
+  @ApiMethod(path = "pushToGcm")
+  public void push(@Named("documentId") String docId, @Named("message") String message) {
     // Trim message if needed.
     if (message.length() > 1000) {
-      message = message.substring(0, 1000) + "[...]";
+      log.warning(docId + ": Message too large (" + message.length() + " chars), not publishing: "
+          + message);
+      return;
+    }
+    Sender sender = new Sender(API_KEY);
+    // ping a max of 10 registered devices
+    List<Subscription> subscriptions;
+    try {
+      subscriptions =
+          service.listSubscriptions(PresenceUtil.docIdTopic(docId,
+              com.goodow.realtime.channel.rpc.Constants.ANDROID + ""));
+      if (subscriptions.isEmpty()) {
+        return;
+      }
+    } catch (IllegalArgumentException e) {
+      return;
+    }
+
+    List<String> ids = new ArrayList<String>();
+    for (Subscription subscription : subscriptions) {
+      String id = subscription.getId();
+      String token = presence.get().channelTokenFor(id);
+      if (token == null) {
+        continue;
+      }
+      ids.add(token);
     }
     MulticastResult results = null;
     try {
@@ -114,25 +133,26 @@ public class GoogleCloudMessaging {
     if (results.getFailure() == 0 && results.getCanonicalIds() == 0) {
       return;
     }
-    Iterator<DeviceInfo> iterator = items.iterator();
+    int i = 0;
     for (Result result : results.getResults()) {
-      DeviceInfo deviceInfo = iterator.next();
       if (result.getMessageId() != null) {
         String canonicalRegId = result.getCanonicalRegistrationId();
         if (canonicalRegId != null) {
-          endpoint.removeDeviceInfo(deviceInfo.getDeviceRegistrationID());
-          deviceInfo.setDeviceRegistrationID(canonicalRegId);
+          DeviceInfo deviceInfo = endpoint.getDeviceInfo(ids.get(i));
+          endpoint.removeDeviceInfo(ids.get(i));
+          deviceInfo.setId(canonicalRegId);
           endpoint.insertDeviceInfo(deviceInfo);
         }
       } else {
         String error = result.getErrorCodeName();
         if (error.equals(Constants.ERROR_NOT_REGISTERED)) {
-          endpoint.removeDeviceInfo(deviceInfo.getDeviceRegistrationID());
+          endpoint.removeDeviceInfo(ids.get(i));
         } else {
           log.log(Level.WARNING, "Error occur when trying to send a message to android device:"
-              + deviceInfo.getDeviceRegistrationID());
+              + ids.get(i));
         }
       }
+      i++;
     }
   }
 }

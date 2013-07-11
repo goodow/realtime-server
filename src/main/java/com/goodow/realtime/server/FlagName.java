@@ -20,13 +20,8 @@ import com.google.walkaround.wave.server.Flag;
 import java.lang.annotation.Annotation;
 
 public enum FlagName implements FlagDeclaration {
-  APNS_CERT_PASSWORD(String.class),
-  OBJECT_CHANNEL_EXPIRATION_SECONDS(Integer.class),
-  STORE_SERVER(String.class),
-  NUM_STORE_SERVERS(Integer.class),
-  POST_COMMIT_ACTION_INTERVAL_MILLIS(Integer.class),
-  SLOB_LOCAL_CACHE_EXPIRATION_MILLIS(Integer.class),
-  ;
+  APNS_CERT_PASSWORD(String.class), STORE_SERVER(String.class), NUM_STORE_SERVERS(Integer.class), POST_COMMIT_ACTION_INTERVAL_MILLIS(
+      Integer.class), SLOB_LOCAL_CACHE_EXPIRATION_MILLIS(Integer.class), ;
 
   // Stolen from com.google.inject.name.NamedImpl.
   static class FlagImpl implements Flag {
@@ -37,16 +32,13 @@ public enum FlagName implements FlagDeclaration {
       this.value = value;
     }
 
-    @Override public FlagName value() {
-      return value;
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      return Flag.class;
     }
 
-    @Override public int hashCode() {
-      // This is specified in java.lang.Annotation.
-      return 127 * "value".hashCode() ^ value.hashCode();
-    }
-
-    @Override public boolean equals(Object o) {
+    @Override
+    public boolean equals(Object o) {
       if (!(o instanceof Flag)) {
         return false;
       }
@@ -54,12 +46,20 @@ public enum FlagName implements FlagDeclaration {
       return value.equals(other.value());
     }
 
-    @Override public String toString() {
+    @Override
+    public int hashCode() {
+      // This is specified in java.lang.Annotation.
+      return 127 * "value".hashCode() ^ value.hashCode();
+    }
+
+    @Override
+    public String toString() {
       return "@Flag(" + value + ")";
     }
 
-    @Override public Class<? extends Annotation> annotationType() {
-      return Flag.class;
+    @Override
+    public FlagName value() {
+      return value;
     }
   }
 
@@ -71,15 +71,18 @@ public enum FlagName implements FlagDeclaration {
     this.type = type;
   }
 
-  @Override public Annotation getAnnotation() {
+  @Override
+  public Annotation getAnnotation() {
     return new FlagImpl(this);
   }
 
-  @Override public String getName() {
+  @Override
+  public String getName() {
     return name;
   }
 
-  @Override public Class<?> getType() {
+  @Override
+  public Class<?> getType() {
     return type;
   }
 }
