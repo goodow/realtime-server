@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.server;
 
-import com.goodow.realtime.channel.rpc.Constants.Services;
+import com.goodow.realtime.channel.constant.Constants.Services;
 import com.goodow.realtime.server.auth.RpcAuthFilter;
 import com.goodow.realtime.server.presence.AppEngineChannelPresenceServlet;
 import com.goodow.realtime.server.presence.PresenceHandler;

@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.server.rpc;
 
-import com.goodow.realtime.channel.rpc.Constants.Params;
+import com.goodow.realtime.channel.constant.Constants.Params;
 import com.goodow.realtime.server.model.Delta;
 import com.goodow.realtime.server.model.DeltaSerializer;
 import com.goodow.realtime.server.model.ObjectId;

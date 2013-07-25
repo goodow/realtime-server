@@ -42,7 +42,7 @@ public class RealtimeApisModule extends GuiceSystemServiceServletModule {
   @Override
   protected void configureServlets() {
     install(new JpaPersistModule("transactions-optional"));
-    filter("/*").through(PersistFilter.class);
+    filterRegex("^/(?!_ah/(upload|admin)).*$").through(PersistFilter.class);
     MethodInterceptor finderInterceptor = new JpaFinderProxy();
     requestInjection(finderInterceptor);
     bindInterceptor(Matchers.any(), Matchers.annotatedWith(Finder.class), finderInterceptor);

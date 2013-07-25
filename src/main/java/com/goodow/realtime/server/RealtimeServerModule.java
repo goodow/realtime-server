@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.server;
 
-import com.goodow.realtime.channel.rpc.Constants;
+import com.goodow.realtime.channel.constant.Platform;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.RealtimeSlobAdapter;
 import com.goodow.realtime.server.presence.AppEngineChannelService;
@@ -150,9 +150,9 @@ public class RealtimeServerModule extends AbstractModule {
 
     MapBinder<String, MessageRouter> uriBinder =
         MapBinder.newMapBinder(binder(), String.class, MessageRouter.class);
-    uriBinder.addBinding("" + Constants.WEB).to(AppEngineChannelService.class);
-    uriBinder.addBinding("" + Constants.ANDROID).to(GoogleCloudMessaging.class);
-    uriBinder.addBinding("" + Constants.IOS).to(ApplePushNotification.class);
+    uriBinder.addBinding("" + Platform.WEB.prefix()).to(AppEngineChannelService.class);
+    uriBinder.addBinding("" + Platform.ANDROID.prefix()).to(GoogleCloudMessaging.class);
+    uriBinder.addBinding("" + Platform.IOS.prefix()).to(ApplePushNotification.class);
   }
 
   @Provides

@@ -14,7 +14,7 @@
 
 package com.google.walkaround.slob.server;
 
-import com.goodow.realtime.channel.rpc.Constants;
+import com.goodow.realtime.channel.constant.Constants;
 import com.goodow.realtime.server.model.Delta;
 import com.goodow.realtime.server.model.DeltaRejected;
 import com.goodow.realtime.server.model.DeltaSerializer;

@@ -185,7 +185,7 @@
         <configuration>
           <enhancerApi>JPA</enhancerApi>
           <classPath>${project.build.outputDirectory}</classPath>
-          <!-- <enableJarClasses>true</enableJarClasses> -->
+          <enableJarClasses>false</enableJarClasses>
           <!-- <jvmFlags>
             <jvmFlag>-Xms1024M -Xmx1024M</jvmFlag>
             <jvmFlag>-Xss10M</jvmFlag>

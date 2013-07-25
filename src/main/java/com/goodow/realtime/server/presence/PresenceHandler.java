@@ -13,8 +13,8 @@
  */
 package com.goodow.realtime.server.presence;
 
-import com.goodow.realtime.channel.rpc.Constants.Params;
-import com.goodow.realtime.channel.rpc.Constants.Services;
+import com.goodow.realtime.channel.constant.Constants.Params;
+import com.goodow.realtime.channel.constant.Constants.Services;
 import com.goodow.realtime.server.rpc.RpcUtil;
 
 import com.google.gson.JsonArray;
@@ -26,6 +26,8 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -52,17 +54,17 @@ public class PresenceHandler extends HttpServlet {
     }
     String sessionId = req.getParameter(Params.SESSION_ID);
     String json = RpcUtil.readRequestBody(req);
-    if (json == null) {
+    if (json == null || json.isEmpty()) {
       assert !isConnect;
-      presenceEndpoint.get().disconnect(sessionId);
+      presenceEndpoint.get().disconnect(sessionId, null);
       return;
     }
     JsonObject payload = new JsonParser().parse(json).getAsJsonObject();
     JsonArray ids = payload.get(Params.IDS).getAsJsonArray();
-    String[] docIds = new String[ids.size()];
+    List<String> docIds = new ArrayList<String>(ids.size());
     int i = 0;
     for (JsonElement e : ids) {
-      docIds[i++] = e.getAsString();
+      docIds.add(i++, e.getAsString());
     }
     if (isConnect) {
       presenceEndpoint.get().connect(sessionId, docIds);

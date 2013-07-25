@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.server.servlet;
 
-import com.goodow.realtime.channel.rpc.Constants.Params;
+import com.goodow.realtime.channel.constant.Constants.Params;
 import com.goodow.realtime.operation.id.IdGenerator;
 
 import com.google.gson.JsonObject;

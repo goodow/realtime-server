@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.server.presence;
 
-import com.goodow.realtime.channel.rpc.Constants;
+import com.goodow.realtime.channel.constant.Platform;
 import com.goodow.realtime.server.RealtimeApisModule;
 
 import com.google.api.server.spi.config.AnnotationBoolean;
@@ -22,12 +22,10 @@ import com.google.api.server.spi.config.ApiMethod;
 import com.google.appengine.api.channel.ChannelFailureException;
 import com.google.appengine.api.channel.ChannelMessage;
 import com.google.appengine.api.channel.ChannelService;
-import com.google.appengine.api.prospectivesearch.ProspectiveSearchService;
-import com.google.appengine.api.prospectivesearch.Subscription;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,13 +36,14 @@ import javax.inject.Named;
 public class AppEngineChannelService implements MessageRouter {
   public static final Logger log = Logger.getLogger(AppEngineChannelService.class.getName());
   @Inject
-  private ProspectiveSearchService service;
-  @Inject
   private ChannelService channelService;
+  @Inject
+  private PresenceEndpoint presence;
 
   @Override
   @ApiMethod(path = "pushToAppEngineChannel")
-  public void push(@Named("documentId") String docId, @Named("message") String msg) {
+  public void push(@Named("documentId") String docId, @Named("messageType") String messageType,
+      @Named("message") String msg) {
     if (msg.length() > 8000) {
       // Channel API has a limit of 32767 UTF-8 bytes. It's OK for us not to
       // publish large messages; we can let clients poll. TODO(ohler): 8000 is
@@ -53,21 +52,18 @@ public class AppEngineChannelService implements MessageRouter {
           + msg);
       return;
     }
-    List<Subscription> subscriptions;
-    try {
-      subscriptions = service.listSubscriptions(PresenceUtil.docIdTopic(docId, Constants.WEB + ""));
-    } catch (IllegalArgumentException e) {
+    Set<String> subscriptions = presence.listDocumentSubscriptions(docId, Platform.WEB.name());
+    if (subscriptions == null || subscriptions.isEmpty()) {
       return;
     }
-    for (Subscription subscription : subscriptions) {
+    for (String subscription : subscriptions) {
       try {
-        channelService.sendMessage(new ChannelMessage(subscription.getId(), msg));
+        channelService.sendMessage(new ChannelMessage(subscription, msg));
       } catch (ChannelFailureException e) {
         // Channel service is best-effort anyway, so it's safe to discard the
         // exception after taking note of it.
-        log.log(Level.SEVERE, "Channel service failed for " + subscription.getId(), e);
+        log.log(Level.SEVERE, "Channel service failed for " + subscription, e);
       }
     }
   }
-
 }

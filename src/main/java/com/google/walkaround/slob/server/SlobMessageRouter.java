@@ -14,7 +14,8 @@
 
 package com.google.walkaround.slob.server;
 
-import com.goodow.realtime.channel.rpc.Constants;
+import com.goodow.realtime.channel.constant.MessageType;
+import com.goodow.realtime.channel.constant.Platform;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.Session;
 import com.goodow.realtime.server.presence.MessageRouter;
@@ -26,6 +27,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.walkaround.util.server.appengine.MemcacheTable;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -67,7 +69,7 @@ public class SlobMessageRouter {
    * will return the client's existing token if it already has one.
    */
   public String connectListener(ObjectId objectId, Session sessionId) {
-    presence.get().connect(sessionId.sessionId, objectId.toString());
+    presence.get().connect(sessionId.sessionId, Collections.singletonList(objectId.toString()));
     return tokenFor(sessionId);
   }
 
@@ -76,14 +78,14 @@ public class SlobMessageRouter {
    */
   public void publishMessages(ObjectId object, String jsonString) {
     for (MessageRouter messageRouter : messageRouters.values()) {
-      messageRouter.push(object.toString(), jsonString);
+      messageRouter.push(object.toString(), MessageType.REALTIME.name(), jsonString);
     }
     log.info("Publishing " + object + " " + jsonString);
   }
 
   private String tokenFor(Session session) {
     String sessionId = session.sessionId;
-    if (sessionId.charAt(0) != Constants.WEB) {
+    if (sessionId.charAt(0) != Platform.WEB.prefix()) {
       return null;
     }
     String existing = clientTokens.get(sessionId);

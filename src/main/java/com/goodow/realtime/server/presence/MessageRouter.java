@@ -13,8 +13,9 @@
  */
 package com.goodow.realtime.server.presence;
 
+
 public interface MessageRouter {
 
-  void push(String docId, String msg);
+  void push(String docId, String messageType, String msg);
 
 }

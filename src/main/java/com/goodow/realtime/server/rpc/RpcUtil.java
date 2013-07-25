@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.server.rpc;
 
-import com.goodow.realtime.channel.rpc.Constants;
+import com.goodow.realtime.channel.constant.Constants;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;

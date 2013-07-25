@@ -13,6 +13,8 @@
  */
 package com.goodow.realtime.server.presence;
 
+import com.goodow.realtime.channel.constant.MessageType;
+import com.goodow.realtime.channel.constant.Platform;
 import com.goodow.realtime.server.RealtimeApisModule;
 import com.goodow.realtime.server.device.DeviceEndpoint;
 import com.goodow.realtime.server.device.DeviceInfo;
@@ -25,8 +27,6 @@ import com.google.android.gcm.server.Sender;
 import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
-import com.google.appengine.api.prospectivesearch.ProspectiveSearchService;
-import com.google.appengine.api.prospectivesearch.Subscription;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -34,11 +34,11 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.inject.Named;
-import javax.persistence.EntityManager;
 
 /**
  * A simple Cloud Endpoint that receives notifications from a web client (<server url>/index.html),
@@ -76,11 +76,9 @@ public class GoogleCloudMessaging implements MessageRouter {
   @Inject
   private DeviceEndpoint endpoint;
   @Inject
-  private Provider<EntityManager> em;
+  private Provider<PresenceUtil> util;
   @Inject
-  private ProspectiveSearchService service;
-  @Inject
-  private Provider<PresenceUtil> presence;
+  private PresenceEndpoint presence;
 
   /**
    * This accepts a message and persists it in the AppEngine datastore, it will also broadcast the
@@ -92,7 +90,8 @@ public class GoogleCloudMessaging implements MessageRouter {
    */
   @Override
   @ApiMethod(path = "pushToGcm")
-  public void push(@Named("documentId") String docId, @Named("message") String message) {
+  public void push(@Named("documentId") String docId, @Named("messageType") String messageType,
+      @Named("message") String message) {
     // Trim message if needed.
     if (message.length() > 1000) {
       log.warning(docId + ": Message too large (" + message.length() + " chars), not publishing: "
@@ -101,22 +100,14 @@ public class GoogleCloudMessaging implements MessageRouter {
     }
     Sender sender = new Sender(API_KEY);
     // ping a max of 10 registered devices
-    List<Subscription> subscriptions;
-    try {
-      subscriptions =
-          service.listSubscriptions(PresenceUtil.docIdTopic(docId,
-              com.goodow.realtime.channel.rpc.Constants.ANDROID + ""));
-      if (subscriptions.isEmpty()) {
-        return;
-      }
-    } catch (IllegalArgumentException e) {
+    Set<String> subscriptions = presence.listDocumentSubscriptions(docId, Platform.ANDROID.name());
+    if (subscriptions == null || subscriptions.isEmpty()) {
       return;
     }
 
     List<String> ids = new ArrayList<String>();
-    for (Subscription subscription : subscriptions) {
-      String id = subscription.getId();
-      String token = presence.get().channelTokenFor(id);
+    for (String subscription : subscriptions) {
+      String token = util.get().channelTokenFor(subscription);
       if (token == null) {
         continue;
       }
@@ -124,7 +115,9 @@ public class GoogleCloudMessaging implements MessageRouter {
     }
     MulticastResult results = null;
     try {
-      Message msg = new Message.Builder().addData("0", message).timeToLive(0).build();
+      Message msg =
+          new Message.Builder().addData(MessageType.valueOf(messageType).key(), message)
+              .timeToLive(0).build();
       results = sender.sendNoRetry(msg, ids);
     } catch (IOException e) {
       log.log(Level.SEVERE, "Error when send message to Google Cloud Messaging Service", e);

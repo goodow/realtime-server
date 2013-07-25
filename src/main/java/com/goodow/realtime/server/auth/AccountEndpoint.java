@@ -42,11 +42,11 @@ import javax.persistence.Query;
 @Api(name = "account", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
 public class AccountEndpoint {
   @Inject
-  Provider<EntityManager> em;
+  private Provider<EntityManager> em;
   @Inject
-  Provider<Secret> secret;
+  private Provider<Secret> secret;
   @Inject
-  IdGenerator idGenerator;
+  private IdGenerator idGenerator;
 
   @ApiMethod(name = "findByName")
   public AccountInfo findByName(@Named("name") String name) {

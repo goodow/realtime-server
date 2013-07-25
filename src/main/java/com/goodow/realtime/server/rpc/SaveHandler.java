@@ -13,8 +13,8 @@
  */
 package com.goodow.realtime.server.rpc;
 
-import com.goodow.realtime.channel.rpc.Constants;
-import com.goodow.realtime.channel.rpc.Constants.Params;
+import com.goodow.realtime.channel.constant.Constants;
+import com.goodow.realtime.channel.constant.Constants.Params;
 import com.goodow.realtime.server.auth.AccountContext;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.ObjectSession;

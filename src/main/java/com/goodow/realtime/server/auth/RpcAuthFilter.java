@@ -13,7 +13,7 @@
  */
 package com.goodow.realtime.server.auth;
 
-import com.goodow.realtime.channel.rpc.Constants.Params;
+import com.goodow.realtime.channel.constant.Constants.Params;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;

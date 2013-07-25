@@ -13,14 +13,13 @@
  */
 package com.goodow.realtime.server.presence;
 
-import com.goodow.realtime.channel.rpc.Constants;
+import com.goodow.realtime.channel.constant.MessageType;
+import com.goodow.realtime.channel.constant.Platform;
 import com.goodow.realtime.server.RealtimeApisModule;
 
 import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
-import com.google.appengine.api.prospectivesearch.ProspectiveSearchService;
-import com.google.appengine.api.prospectivesearch.Subscription;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -29,7 +28,7 @@ import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.PayloadBuilder;
 
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.inject.Named;
@@ -41,26 +40,26 @@ public class ApplePushNotification implements MessageRouter {
   @Inject
   private Provider<ApnsService> apnsService;
   @Inject
-  private ProspectiveSearchService service;
+  private Provider<PresenceUtil> util;
   @Inject
-  private Provider<PresenceUtil> presence;
+  private PresenceEndpoint presence;
 
   @Override
   @ApiMethod(path = "pushToApns")
-  public void push(@Named("documentId") String docId, @Named("message") String message) {
+  public void push(@Named("documentId") String docId, @Named("messageType") String messageType,
+      @Named("message") String message) {
     // ping a max of 10 registered devices
-    List<Subscription> subscriptions;
-    try {
-      subscriptions = service.listSubscriptions(PresenceUtil.docIdTopic(docId, Constants.IOS + ""));
-    } catch (IllegalArgumentException e) {
+    Set<String> subscriptions = presence.listDocumentSubscriptions(docId, Platform.IOS.name());
+    if (subscriptions == null || subscriptions.isEmpty()) {
       return;
     }
-    PayloadBuilder payloadBuilder = APNS.newPayload().customField("0", message);
+    PayloadBuilder payloadBuilder =
+        APNS.newPayload().customField(MessageType.valueOf(messageType).key(), message);
     log.info("payload length:" + payloadBuilder.length());
     String payload = payloadBuilder.build();
-    for (Subscription subscription : subscriptions) {
-      String id = subscription.getId();
-      String token = presence.get().channelTokenFor(id);
+    for (String subscription : subscriptions) {
+      String id = subscription;
+      String token = util.get().channelTokenFor(id);
       if (token == null) {
         continue;
       }

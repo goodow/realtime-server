@@ -13,7 +13,6 @@
  */
 package com.goodow.realtime.server.presence;
 
-
 import com.google.appengine.api.channel.ChannelPresence;
 import com.google.appengine.api.channel.ChannelService;
 import com.google.inject.Inject;
@@ -41,9 +40,9 @@ public class AppEngineChannelPresenceServlet extends HttpServlet {
     ChannelPresence presence = channelService.parsePresence(req);
     String clientId = presence.clientId();
     if (presence.isConnected()) {
-      presenceEndpoint.get().connect(clientId);
+      presenceEndpoint.get().connect(clientId, null);
     } else {
-      presenceEndpoint.get().disconnect(clientId);
+      presenceEndpoint.get().disconnect(clientId, null);
     }
     super.doPost(req, resp);
   }
