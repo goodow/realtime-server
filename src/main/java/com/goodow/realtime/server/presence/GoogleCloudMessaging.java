@@ -13,7 +13,6 @@
  */
 package com.goodow.realtime.server.presence;
 
-import com.goodow.realtime.channel.constant.MessageType;
 import com.goodow.realtime.channel.constant.Platform;
 import com.goodow.realtime.server.RealtimeApisModule;
 import com.goodow.realtime.server.device.DeviceEndpoint;
@@ -80,6 +79,35 @@ public class GoogleCloudMessaging implements MessageRouter {
   @Inject
   private PresenceEndpoint presence;
 
+  @Override
+  @ApiMethod(path = "pushToGcm")
+  public void push(@Named("subscribeId") String subscribeId,
+      @Named("messageType") String messageType, @Named("message") String message) {
+    Sender sender = new Sender(API_KEY);
+    Message msg = new Message.Builder().addData(messageType, message).timeToLive(0).build();
+    Result result = null;
+    try {
+      result = sender.sendNoRetry(msg, subscribeId);
+    } catch (IOException e) {
+      log.log(Level.SEVERE, "Error when send message to Google Cloud Messaging Service", e);
+      return;
+    }
+    if (result.getMessageId() != null) {
+      String canonicalRegId = result.getCanonicalRegistrationId();
+      if (canonicalRegId != null) {
+        DeviceInfo deviceInfo = endpoint.getDeviceInfo(subscribeId);
+        endpoint.removeDeviceInfo(subscribeId);
+        deviceInfo.setId(canonicalRegId);
+        endpoint.insertDeviceInfo(deviceInfo);
+      }
+    } else {
+      String error = result.getErrorCodeName();
+      if (error.equals(Constants.ERROR_NOT_REGISTERED)) {
+        endpoint.removeDeviceInfo(subscribeId);
+      }
+    }
+  }
+
   /**
    * This accepts a message and persists it in the AppEngine datastore, it will also broadcast the
    * message to upto 10 registered android devices via Google Cloud Messaging
@@ -89,8 +117,8 @@ public class GoogleCloudMessaging implements MessageRouter {
    * @throws IOException
    */
   @Override
-  @ApiMethod(path = "pushToGcm")
-  public void push(@Named("documentId") String docId, @Named("messageType") String messageType,
+  @ApiMethod(path = "pushAllToGcm")
+  public void pushAll(@Named("documentId") String docId, @Named("messageType") String messageType,
       @Named("message") String message) {
     // Trim message if needed.
     if (message.length() > 1000) {
@@ -115,9 +143,7 @@ public class GoogleCloudMessaging implements MessageRouter {
     }
     MulticastResult results = null;
     try {
-      Message msg =
-          new Message.Builder().addData(MessageType.valueOf(messageType).key(), message)
-              .timeToLive(0).build();
+      Message msg = new Message.Builder().addData(messageType, message).timeToLive(0).build();
       results = sender.sendNoRetry(msg, ids);
     } catch (IOException e) {
       log.log(Level.SEVERE, "Error when send message to Google Cloud Messaging Service", e);

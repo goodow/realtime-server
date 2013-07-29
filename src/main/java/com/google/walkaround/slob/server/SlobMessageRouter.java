@@ -78,7 +78,7 @@ public class SlobMessageRouter {
    */
   public void publishMessages(ObjectId object, String jsonString) {
     for (MessageRouter messageRouter : messageRouters.values()) {
-      messageRouter.push(object.toString(), MessageType.REALTIME.name(), jsonString);
+      messageRouter.pushAll(object.toString(), MessageType.REALTIME.key(), jsonString);
     }
     log.info("Publishing " + object + " " + jsonString);
   }

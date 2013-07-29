@@ -30,6 +30,7 @@ public class DeviceInfo {
    */
   @Id
   private String id;
+  private String name;
 
   /*
    * Some identifying information about the device, such as its manufacturer and product name.
@@ -51,6 +52,10 @@ public class DeviceInfo {
     return information;
   }
 
+  public String getName() {
+    return name;
+  }
+
   public String getSessionId() {
     return sessionId;
   }
@@ -65,6 +70,10 @@ public class DeviceInfo {
 
   public void setInformation(String information) {
     this.information = information;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   public void setSessionId(String sessionId) {

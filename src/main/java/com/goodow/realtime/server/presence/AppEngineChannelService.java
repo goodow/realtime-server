@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 
 @Singleton
@@ -42,8 +43,21 @@ public class AppEngineChannelService implements MessageRouter {
 
   @Override
   @ApiMethod(path = "pushToAppEngineChannel")
-  public void push(@Named("documentId") String docId, @Named("messageType") String messageType,
-      @Named("message") String msg) {
+  public void push(@Named("subscribeId") String subscribeId,
+      @Nullable @Named("messageType") String messageType, @Named("message") String msg) {
+    try {
+      channelService.sendMessage(new ChannelMessage(subscribeId, msg));
+    } catch (ChannelFailureException e) {
+      // Channel service is best-effort anyway, so it's safe to discard the
+      // exception after taking note of it.
+      log.log(Level.SEVERE, "Channel service failed for " + subscribeId, e);
+    }
+  }
+
+  @Override
+  @ApiMethod(path = "pushAllToAppEngineChannel")
+  public void pushAll(@Named("documentId") String docId,
+      @Nullable @Named("messageType") String messageType, @Named("message") String msg) {
     if (msg.length() > 8000) {
       // Channel API has a limit of 32767 UTF-8 bytes. It's OK for us not to
       // publish large messages; we can let clients poll. TODO(ohler): 8000 is
@@ -57,13 +71,7 @@ public class AppEngineChannelService implements MessageRouter {
       return;
     }
     for (String subscription : subscriptions) {
-      try {
-        channelService.sendMessage(new ChannelMessage(subscription, msg));
-      } catch (ChannelFailureException e) {
-        // Channel service is best-effort anyway, so it's safe to discard the
-        // exception after taking note of it.
-        log.log(Level.SEVERE, "Channel service failed for " + subscription, e);
-      }
+      push(subscription, messageType, msg);
     }
   }
 }

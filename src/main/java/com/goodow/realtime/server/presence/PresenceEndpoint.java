@@ -46,6 +46,8 @@ public class PresenceEndpoint {
 
   @Inject
   private ProspectiveSearchService service;
+  // @Inject
+  // private SlobStore store;
   private final MemcacheTable<String, HashSet<String>> sessionDocs;
   private final MemcacheTable<String, HashSet<String>> docWebSessions;
   private final MemcacheTable<String, HashSet<String>> docAndroidSessions;
@@ -114,22 +116,55 @@ public class PresenceEndpoint {
     }
   }
 
+  // private void presenceOperation(ObjectId id) {
+  // String snapshot = null;
+  // try {
+  // snapshot = store.loadAtVersion(id, null);
+  // } catch (SlobNotFoundException e) {
+  // // TODO Auto-generated catch block
+  // e.printStackTrace();
+  // } catch (IOException e) {
+  // // TODO Auto-generated catch block
+  // e.printStackTrace();
+  // } catch (AccessDeniedException e) {
+  // // TODO Auto-generated catch block
+  // e.printStackTrace();
+  // }
+  // DocumentBridge bridge = new DocumentBridge((JsonArray) Json.instance().parse(snapshot));
+  // bridge.setOutputSink(new OutputSink() {
+  //
+  // @Override
+  // public void close() {
+  // }
+  //
+  // @Override
+  // public void consume(RealtimeOperation<?> op) {
+  // }
+  // });
+  // Model model = bridge.getDocument().getModel();
+  // CollaborativeList list = model.getRoot().get(Constants.PRESENCE_KEY);
+  // }
+
   private void subscribe(String sessionId, String docId) {
     log.config("Subscribing " + sessionId + " to " + docId);
     HashSet<String> docs = (HashSet<String>) listSessionSubscriptions(sessionId);
     if (docs == null) {
       docs = new HashSet<String>();
     }
-    docs.add(docId);
-    sessionDocs.put(sessionId, docs, Expiration.byDeltaSeconds(PresenceExpirationSeconds));
+    if (!docs.contains(docId)) {
+      docs.add(docId);
+      sessionDocs.put(sessionId, docs, Expiration.byDeltaSeconds(PresenceExpirationSeconds));
+    }
     Platform platform = Platform.fromPrefix(sessionId.charAt(0));
     HashSet<String> sessions = (HashSet<String>) listDocumentSubscriptions(docId, platform.name());
     if (sessions == null) {
       sessions = new HashSet<String>();
     }
-    sessions.add(sessionId);
-    MemcacheTable<String, HashSet<String>> docSessions = getCachedSessions(platform.name());
-    docSessions.put(docId, sessions, Expiration.byDeltaSeconds(PresenceExpirationSeconds));
+    if (!sessions.contains(sessionId)) {
+      sessions.add(sessionId);
+      MemcacheTable<String, HashSet<String>> docSessions = getCachedSessions(platform.name());
+      docSessions.put(docId, sessions, Expiration.byDeltaSeconds(PresenceExpirationSeconds));
+    }
   }
 
   private void unsubscribe(String sessionId, String docId) {

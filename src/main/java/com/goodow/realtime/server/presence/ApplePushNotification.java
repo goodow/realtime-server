@@ -46,7 +46,17 @@ public class ApplePushNotification implements MessageRouter {
 
   @Override
   @ApiMethod(path = "pushToApns")
-  public void push(@Named("documentId") String docId, @Named("messageType") String messageType,
+  public void push(@Named("subscribeId") String subscribeId,
+      @Named("messageType") String messageType, @Named("message") String message) {
+    PayloadBuilder payloadBuilder = APNS.newPayload().customField(messageType, message);
+    log.info("payload length:" + payloadBuilder.length());
+    String payload = payloadBuilder.build();
+    apnsService.get().push(subscribeId, payload);
+  }
+
+  @Override
+  @ApiMethod(path = "pushAllToApns")
+  public void pushAll(@Named("documentId") String docId, @Named("messageType") String messageType,
       @Named("message") String message) {
     // ping a max of 10 registered devices
     Set<String> subscriptions = presence.listDocumentSubscriptions(docId, Platform.IOS.name());
