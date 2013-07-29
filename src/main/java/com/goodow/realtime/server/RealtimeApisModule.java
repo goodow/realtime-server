@@ -17,6 +17,9 @@ import com.goodow.realtime.channel.http.HttpTransport;
 import com.goodow.realtime.server.auth.AccountEndpoint;
 import com.goodow.realtime.server.device.DeviceEndpoint;
 import com.goodow.realtime.server.persist.jpa.JpaFinderProxy;
+import com.goodow.realtime.server.presence.AppEngineChannelService;
+import com.goodow.realtime.server.presence.ApplePushNotification;
+import com.goodow.realtime.server.presence.GoogleCloudMessaging;
 import com.goodow.realtime.server.presence.PresenceEndpoint;
 import com.goodow.realtime.server.servlet.util.LocalDevServerFilter;
 import com.goodow.realtime.server.servlet.util.ProxyFilter;
@@ -56,6 +59,9 @@ public class RealtimeApisModule extends GuiceSystemServiceServletModule {
     serviceClasses.add(DeviceEndpoint.class);
     serviceClasses.add(AccountEndpoint.class);
     serviceClasses.add(PresenceEndpoint.class);
+    serviceClasses.add(AppEngineChannelService.class);
+    serviceClasses.add(GoogleCloudMessaging.class);
+    serviceClasses.add(ApplePushNotification.class);
     this.serveGuiceSystemServiceServlet("/_ah/spi/*", serviceClasses);
   }
 }

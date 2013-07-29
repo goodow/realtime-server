@@ -91,16 +91,12 @@ public class DeviceEndpoint {
   @SuppressWarnings({"unchecked", "unused"})
   @ApiMethod(name = "listDeviceInfo")
   public CollectionResponse<DeviceInfo> listDeviceInfo(
-      @Nullable @Named("cursor") String cursorString, @Nullable @Named("limit") Integer limit,
-      @Nullable @Named("platform") String platform) {
+      @Nullable @Named("cursor") String cursorString, @Nullable @Named("limit") Integer limit) {
 
     Cursor cursor = null;
     List<DeviceInfo> execute = null;
 
     StringBuilder q = new StringBuilder("select from DeviceInfo as d");
-    if (platform != null) {
-      q.append(" where d.deviceInformation = :platform");
-    }
     Query query = em.get().createQuery(q.toString());
     if (cursorString != null && cursorString != "") {
       cursor = Cursor.fromWebSafeString(cursorString);
@@ -110,9 +106,6 @@ public class DeviceEndpoint {
     if (limit != null) {
       query.setFirstResult(0);
       query.setMaxResults(limit);
-    }
-    if (platform != null) {
-      query.setParameter("platform", platform);
     }
 
     execute = query.getResultList();
