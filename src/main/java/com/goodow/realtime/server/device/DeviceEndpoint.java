@@ -1,10 +1,12 @@
 package com.goodow.realtime.server.device;
 
 import com.goodow.realtime.server.RealtimeApisModule;
+import com.goodow.realtime.server.persist.jpa.EMF;
 
 import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
+import com.google.api.server.spi.config.ApiMethod.HttpMethod;
 import com.google.api.server.spi.config.ApiNamespace;
 import com.google.api.server.spi.response.CollectionResponse;
 import com.google.appengine.api.datastore.Cursor;
@@ -37,6 +39,12 @@ public class DeviceEndpoint {
     } catch (NoResultException e) {
       return null;
     }
+  }
+
+  public DeviceInfo findByToken(@Named("token") String token) {
+    Query query = em.get().createQuery("select from DeviceInfo as d where d.token = ?0");
+    query.setParameter(0, token);
+    return EMF.getSingleResult(query);
   }
 
   /**
@@ -96,7 +104,7 @@ public class DeviceEndpoint {
     Cursor cursor = null;
     List<DeviceInfo> execute = null;
 
-    StringBuilder q = new StringBuilder("select from DeviceInfo as d");
+    StringBuilder q = new StringBuilder("select from DeviceInfo as d order by timestamp DESC ");
     Query query = em.get().createQuery(q.toString());
     if (cursorString != null && cursorString != "") {
       cursor = Cursor.fromWebSafeString(cursorString);
@@ -130,7 +138,7 @@ public class DeviceEndpoint {
    * @param id the primary key of the entity to be deleted.
    * @return The deleted entity.
    */
-  @ApiMethod(name = "removeDeviceInfo")
+  @ApiMethod(name = "removeDeviceInfo", httpMethod = HttpMethod.POST)
   public DeviceInfo removeDeviceInfo(@Named("id") String id) {
     DeviceInfo deviceinfo = null;
     deviceinfo = em.get().find(DeviceInfo.class, id);
@@ -145,7 +153,7 @@ public class DeviceEndpoint {
    * @param deviceinfo the entity to be updated.
    * @return The updated entity.
    */
-  @ApiMethod(name = "updateDeviceInfo")
+  @ApiMethod(path = "updateDeviceInfo", httpMethod = HttpMethod.POST)
   public DeviceInfo updateDeviceInfo(DeviceInfo deviceinfo) {
     if (!containsDeviceInfo(deviceinfo)) {
       throw new EntityNotFoundException("Object does not exist");

@@ -355,7 +355,7 @@ public class LocalMutationProcessor implements MutationProcessor {
   public static JsonObject jsonBroadcastData(String key, JsonArray deltas) {
     JsonObject obj = new JsonObject();
     obj.addProperty(Constants.Params.ID, key);
-    obj.add(Constants.Params.DELTAS, deltas);
+    obj.add(Constants.Params.DELTAS, deltas == null ? new JsonArray() : deltas);
     return obj;
   }
 

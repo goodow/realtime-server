@@ -31,7 +31,7 @@ public class DeviceInfo {
   @Id
   private String id;
   private String name;
-
+  private String token;
   /*
    * Some identifying information about the device, such as its manufacturer and product name.
    */
@@ -64,6 +64,10 @@ public class DeviceInfo {
     return timestamp;
   }
 
+  public String getToken() {
+    return token;
+  }
+
   public void setId(String id) {
     this.id = id;
   }
@@ -82,5 +86,9 @@ public class DeviceInfo {
 
   public void setTimestamp(long timestamp) {
     this.timestamp = timestamp;
+  }
+
+  public void setToken(String token) {
+    this.token = token;
   }
 }

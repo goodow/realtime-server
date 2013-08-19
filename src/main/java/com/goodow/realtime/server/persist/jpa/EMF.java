@@ -14,7 +14,9 @@
 package com.goodow.realtime.server.persist.jpa;
 
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.NoResultException;
 import javax.persistence.Persistence;
+import javax.persistence.Query;
 
 public final class EMF {
   private static final EntityManagerFactory emfInstance = Persistence
@@ -22,6 +24,17 @@ public final class EMF {
 
   public static EntityManagerFactory get() {
     return emfInstance;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T getSingleResult(Query query) {
+    T result;
+    try {
+      result = (T) query.getSingleResult();
+    } catch (NoResultException e) {
+      result = null;
+    }
+    return result;
   }
 
   private EMF() {

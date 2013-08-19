@@ -15,6 +15,7 @@ package com.goodow.realtime.server.auth;
 
 import com.goodow.realtime.operation.id.IdGenerator;
 import com.goodow.realtime.server.RealtimeApisModule;
+import com.goodow.realtime.server.persist.jpa.EMF;
 
 import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
@@ -36,7 +37,6 @@ import javax.inject.Named;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
-import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 @Api(name = "account", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
@@ -52,7 +52,7 @@ public class AccountEndpoint {
   public AccountInfo findByName(@Named("name") String name) {
     Query query = em.get().createQuery("select from AccountInfo as a where a.name = ?0");
     query.setParameter(0, name);
-    return getSingleResult(query);
+    return EMF.getSingleResult(query);
   }
 
   @ApiMethod(name = "getAccountInfo")
@@ -138,7 +138,7 @@ public class AccountEndpoint {
   AccountInfo findByToken(String token) {
     Query query = em.get().createQuery("select from AccountInfo as a where a.token = ?0");
     query.setParameter(0, token);
-    return getSingleResult(query);
+    return EMF.getSingleResult(query);
   }
 
   private boolean containsAccountInfo(AccountInfo account) {
@@ -152,15 +152,5 @@ public class AccountEndpoint {
 
   private String digest(String pwd) {
     return DigestUtils2.hexHmac(secret.get(), pwd);
-  }
-
-  private AccountInfo getSingleResult(Query query) {
-    AccountInfo result;
-    try {
-      result = (AccountInfo) query.getSingleResult();
-    } catch (NoResultException e) {
-      result = null;
-    }
-    return result;
   }
 }
