@@ -13,8 +13,6 @@
  */
 package com.goodow.realtime.server.model;
 
-import com.goodow.realtime.operation.RealtimeOperation;
-import com.goodow.realtime.operation.basic.NoOp;
 import com.goodow.realtime.operation.id.IdGenerator;
 import com.goodow.realtime.operation.util.Pair;
 
@@ -35,7 +33,6 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -62,14 +59,14 @@ public class RealtimeLoader {
     this.datastore = datastore;
   }
 
-  public void create(final ObjectId id, final Session session) throws IOException {
+  public void create(final ObjectId id, final List<Delta<String>> deltas) throws IOException {
     try {
       new RetryHelper().run(new RetryHelper.Body<Void>() {
         @Override
         public Void run() throws RetryableFailure, PermanentFailure {
           CheckedTransaction tx = datastore.beginTransaction();
           try {
-            store.newObject(tx, id, "", createInitOp(session), false);
+            store.newObject(tx, id, "", deltas, false);
             tx.commit();
           } catch (SlobAlreadyExistsException e) {
             throw new RetryableFailure("Object id collision, retrying: " + id, e);
@@ -94,13 +91,11 @@ public class RealtimeLoader {
     ObjectId id;
     if (!key.contains(ObjectId.SEPERATE)) {
       id = new ObjectId(key, idGenerator.next(96 / 6));
-      create(id, sessionId);
-    } else {
-      id = new ObjectId(key);
-      Entity existing = findObject(id);
-      if (existing == null && autoCreate) {
-        create(id, sessionId);
-      }
+    }
+    id = new ObjectId(key);
+    Entity existing = findObject(id);
+    if (existing == null && autoCreate) {
+      return Pair.of(new ConnectResult(null, 0), "[]");
     }
     try {
       return load(id, sessionId);
@@ -113,14 +108,6 @@ public class RealtimeLoader {
       AccessDeniedException, SlobNotFoundException {
     Preconditions.checkNotNull(objectId, "Null objectId");
     return store.loadAtVersion(objectId, version);
-  }
-
-  @SuppressWarnings("unchecked")
-  private List<Delta<String>> createInitOp(Session session) {
-    @SuppressWarnings("rawtypes")
-    RealtimeOperation operation = new RealtimeOperation(NoOp.get());
-    Delta<String> delta = new Delta<String>(session, operation.toString());
-    return Arrays.<Delta<String>> asList(delta);
   }
 
   private Entity findObject(final ObjectId id) throws IOException {

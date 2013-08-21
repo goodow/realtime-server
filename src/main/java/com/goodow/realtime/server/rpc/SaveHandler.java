@@ -16,10 +16,14 @@ package com.goodow.realtime.server.rpc;
 import com.goodow.realtime.channel.constant.Constants;
 import com.goodow.realtime.channel.constant.Constants.Params;
 import com.goodow.realtime.server.auth.AccountContext;
+import com.goodow.realtime.server.model.Delta;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.ObjectSession;
+import com.goodow.realtime.server.model.RealtimeLoader;
 import com.goodow.realtime.server.model.Session;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
@@ -33,6 +37,8 @@ import com.google.walkaround.util.server.servlet.AbstractHandler;
 import com.google.walkaround.util.server.servlet.BadRequestException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -47,9 +53,11 @@ public class SaveHandler extends AbstractHandler {
   private static final Logger log = Logger.getLogger(SaveHandler.class.getName());
 
   @Inject
-  SlobFacilities slobFacilities;
+  private SlobFacilities slobFacilities;
   @Inject
-  Provider<AccountContext> context;
+  private Provider<AccountContext> context;
+  @Inject
+  private RealtimeLoader loader;
 
   @Override
   public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -57,25 +65,38 @@ public class SaveHandler extends AbstractHandler {
     String key = requireParameter(req, Constants.Params.ID);
     JsonObject payload = new JsonParser().parse(RpcUtil.readRequestBody(req)).getAsJsonObject();
     long version = payload.get(Params.REVISION).getAsLong();
-    String deltas = payload.get(Params.CHANGES).toString();
+    String changes = payload.get(Params.CHANGES).toString();
 
-    ServerMutateRequest mutateRequest = new ServerMutateRequest();
-    mutateRequest.setSession(new ObjectSession(new ObjectId(key), new Session(context.get()
-        .getAccountInfo().getUserId(), sid)));
-    mutateRequest.setVersion(version);
-    mutateRequest.setDeltas(deltas);
+    ObjectId id = new ObjectId(key);
+    Session session = new Session(context.get().getAccountInfo().getUserId(), sid);
+    long resultingVersion;
+    if (version == 0) {
+      JsonArray jsonArray = new JsonParser().parse(changes).getAsJsonArray();
+      List<Delta<String>> deltas = new ArrayList<Delta<String>>(jsonArray.size());
+      for (JsonElement e : jsonArray) {
+        deltas.add(new Delta<String>(session, e.toString()));
+      }
+      loader.create(id, deltas);
+      resultingVersion = deltas.size();
+    } else {
+      ServerMutateRequest mutateRequest = new ServerMutateRequest();
+      mutateRequest.setSession(new ObjectSession(id, session));
+      mutateRequest.setVersion(version);
+      mutateRequest.setDeltas(changes);
 
-    MutateResult res;
-    try {
-      res = slobFacilities.getSlobStore().mutateObject(mutateRequest);
-    } catch (SlobNotFoundException e) {
-      throw new BadRequestException("Object not found or access denied", e);
-    } catch (AccessDeniedException e) {
-      throw new BadRequestException("Object not found or access denied", e);
+      MutateResult res;
+      try {
+        res = slobFacilities.getSlobStore().mutateObject(mutateRequest);
+      } catch (SlobNotFoundException e) {
+        throw new BadRequestException("Object not found or access denied", e);
+      } catch (AccessDeniedException e) {
+        throw new BadRequestException("Object not found or access denied", e);
+      }
+      resultingVersion = res.getResultingVersion();
     }
 
     JsonObject json = new JsonObject();
-    json.addProperty(Constants.Params.REVISION, res.getResultingVersion());
+    json.addProperty(Constants.Params.REVISION, resultingVersion);
     RpcUtil.writeJsonResult(req, resp, json.toString());
   }
 }

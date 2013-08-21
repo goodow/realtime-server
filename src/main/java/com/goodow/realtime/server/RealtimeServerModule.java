@@ -14,6 +14,9 @@
 package com.goodow.realtime.server;
 
 import com.goodow.realtime.channel.constant.Platform;
+import com.goodow.realtime.operation.RealtimeOperation;
+import com.goodow.realtime.operation.Transformer;
+import com.goodow.realtime.operation.TransformerImpl;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.RealtimeSlobAdapter;
 import com.goodow.realtime.server.presence.AppEngineChannelService;
@@ -204,6 +207,11 @@ public class RealtimeServerModule extends AbstractModule {
         }
       }
     });
+  }
+
+  @Provides
+  Transformer<RealtimeOperation> provideTransformer() {
+    return new TransformerImpl<RealtimeOperation>();
   }
 
   private <T> void bindToFlag(Class<T> type, Class<? extends Annotation> annotation,

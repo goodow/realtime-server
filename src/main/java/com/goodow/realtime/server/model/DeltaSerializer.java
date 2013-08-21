@@ -47,16 +47,16 @@ public class DeltaSerializer {
 
     JsonArray json = new JsonArray();
     try {
-      json.add(payloadJson);
       Preconditions.checkArgument(resultingRevision >= 0, "invalid rev %s", resultingRevision);
-      json.add(new JsonPrimitive(data.getSession().userId));
       json.add(new JsonPrimitive(resultingRevision));
-      long sanityCheck = json.get(2).getAsLong();
+      long sanityCheck = json.get(0).getAsLong();
       if (sanityCheck != resultingRevision) {
         throw new AssertionError("resultingRevision " + resultingRevision
             + " not losslessly represented in JSON, got back " + sanityCheck);
       }
+      json.add(new JsonPrimitive(data.getSession().userId));
       json.add(new JsonPrimitive(data.getSession().sessionId));
+      json.add(payloadJson);
       return json;
     } catch (JsonParseException e) {
       throw new Error(e);

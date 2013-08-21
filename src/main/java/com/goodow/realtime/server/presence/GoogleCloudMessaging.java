@@ -141,6 +141,9 @@ public class GoogleCloudMessaging implements MessageRouter {
       }
       ids.add(token);
     }
+    if (ids.isEmpty()) {
+      return;
+    }
     MulticastResult results = null;
     try {
       Message msg = new Message.Builder().addData(messageType, message).timeToLive(0).build();

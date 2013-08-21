@@ -69,21 +69,30 @@ public class PollHandler extends AbstractHandler {
     JsonArray msgs = new JsonArray();
     SlobStore store = slobFacilities.getSlobStore();
     String token = null;
-    for (JsonElement e : ids) {
-      JsonArray array = e.getAsJsonArray();
+    for (JsonElement elem : ids) {
+      JsonArray array = elem.getAsJsonArray();
       ObjectId key = new ObjectId(array.get(0).getAsString());
       long startRev = array.get(1).getAsLong();
       Long endVersion = array.size() >= 3 ? array.get(2).getAsLong() : null;
 
-      ConnectResult r =
-          store.reconnect(key, new Session(context.get().getAccountInfo().getUserId(), sessionId));
+      ConnectResult r = null;
+      try {
+        r =
+            store
+                .reconnect(key, new Session(context.get().getAccountInfo().getUserId(), sessionId));
+      } catch (SlobNotFoundException e) {
+        if (startRev == 1) {
+          continue;
+        }
+        throw e;
+      }
       if (r.getChannelToken() != null) {
         assert token == null || token.equals(r.getChannelToken());
         token = r.getChannelToken();
       }
       JsonObject msg = new JsonObject();
       msg.addProperty(Params.ID, key.toString());
-      boolean isEmpty = deltaHandler.fetchDeltas(msg, key, startRev, endVersion);
+      boolean isEmpty = deltaHandler.fetchDeltas(msg, key, startRev - 1, endVersion);
       if (!isEmpty) {
         msgs.add(msg);
       }

@@ -15,8 +15,8 @@ package com.goodow.realtime.server.model;
 
 import com.goodow.realtime.DocumentBridge;
 import com.goodow.realtime.operation.RealtimeOperation;
-import com.goodow.realtime.operation.RealtimeTransformer;
 import com.goodow.realtime.operation.TransformException;
+import com.goodow.realtime.operation.Transformer;
 import com.goodow.realtime.operation.util.Pair;
 
 import com.google.inject.Inject;
@@ -32,8 +32,6 @@ import elemental.json.Json;
 import elemental.json.JsonArray;
 import elemental.json.JsonException;
 import elemental.json.JsonValue;
-import elemental.util.ArrayOf;
-import elemental.util.Collections;
 
 public class RealtimeSlobAdapter implements SlobModel {
   class RealtimeSlob implements Slob {
@@ -45,12 +43,12 @@ public class RealtimeSlobAdapter implements SlobModel {
 
     @Override
     public void apply(Delta<String> change) throws DeltaRejected {
-      RealtimeOperation<?> op;
+      RealtimeOperation op;
       try {
         JsonValue serialized = Json.instance().parse(change.getPayload());
         op =
-            transformer.createOperation(serialized, change.getSession().userId,
-                change.getSession().sessionId);
+            transformer.createOperation(change.getSession().userId, change.getSession().sessionId,
+                serialized);
       } catch (JsonException e) {
         throw new DeltaRejected("Malformed op: " + change, e);
       }
@@ -68,10 +66,10 @@ public class RealtimeSlobAdapter implements SlobModel {
     }
   }
 
-  private final RealtimeTransformer transformer;
+  private final Transformer<RealtimeOperation> transformer;
 
   @Inject
-  RealtimeSlobAdapter(RealtimeTransformer transformer) {
+  RealtimeSlobAdapter(Transformer<RealtimeOperation> transformer) {
     this.transformer = transformer;
   }
 
@@ -92,12 +90,12 @@ public class RealtimeSlobAdapter implements SlobModel {
   public List<String> transform(List<Delta<String>> clientOps, List<Delta<String>> serverOps)
       throws DeltaRejected {
     try {
-      Pair<ArrayOf<RealtimeOperation<?>>, ArrayOf<RealtimeOperation<?>>> pair =
-          transformer.transform(deserializeOps(serverOps), deserializeOps(clientOps));
-      ArrayOf<RealtimeOperation<?>> cOps = pair.second;
-      ArrayList<String> toRtn = new ArrayList<String>(cOps.length());
-      for (int i = 0, len = cOps.length(); i < len; i++) {
-        toRtn.add(cOps.get(i).toString());
+      Pair<List<RealtimeOperation>, List<RealtimeOperation>> pair =
+          transformer.transform(deserializeOps(clientOps), deserializeOps(serverOps));
+      List<RealtimeOperation> cOps = pair.first;
+      ArrayList<String> toRtn = new ArrayList<String>(cOps.size());
+      for (RealtimeOperation op : cOps) {
+        toRtn.add(op.toString());
       }
       return toRtn;
     } catch (TransformException e) {
@@ -105,21 +103,19 @@ public class RealtimeSlobAdapter implements SlobModel {
     }
   }
 
-  private ArrayOf<RealtimeOperation<?>> deserializeOps(List<Delta<String>> changes)
-      throws DeltaRejected {
-    ArrayOf<RealtimeOperation<?>> ops = Collections.arrayOf();
-    for (int i = 0; i < changes.size(); i++) {
-      RealtimeOperation<?> op;
+  private List<RealtimeOperation> deserializeOps(List<Delta<String>> changes) throws DeltaRejected {
+    List<RealtimeOperation> ops = new ArrayList<RealtimeOperation>();
+    for (Delta<String> delta : changes) {
+      RealtimeOperation op;
       try {
-        Delta<String> delta = changes.get(i);
         JsonValue serialized = Json.instance().parse(delta.getPayload());
         op =
-            transformer.createOperation(serialized, delta.getSession().userId,
-                delta.getSession().sessionId);
+            transformer.createOperation(delta.getSession().userId, delta.getSession().sessionId,
+                serialized);
       } catch (JsonException e) {
         throw new DeltaRejected(e);
       }
-      ops.push(op);
+      ops.add(op);
     }
     return ops;
   }
