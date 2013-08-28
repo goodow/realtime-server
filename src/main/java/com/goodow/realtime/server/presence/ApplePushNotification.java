@@ -20,6 +20,7 @@ import com.goodow.realtime.server.RealtimeApisModule;
 import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
+import com.google.api.server.spi.config.ApiNamespace;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -34,7 +35,7 @@ import java.util.logging.Logger;
 import javax.inject.Named;
 
 @Singleton
-@Api(name = "presence", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE)
+@Api(name = "presence", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
 public class ApplePushNotification implements MessageRouter {
   private static final Logger log = Logger.getLogger(ApplePushNotification.class.getName());
   @Inject

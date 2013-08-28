@@ -19,6 +19,7 @@ import com.goodow.realtime.server.RealtimeApisModule;
 import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
+import com.google.api.server.spi.config.ApiNamespace;
 import com.google.appengine.api.channel.ChannelFailureException;
 import com.google.appengine.api.channel.ChannelMessage;
 import com.google.appengine.api.channel.ChannelService;
@@ -33,7 +34,7 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 
 @Singleton
-@Api(name = "presence", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE)
+@Api(name = "presence", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
 public class AppEngineChannelService implements MessageRouter {
   public static final Logger log = Logger.getLogger(AppEngineChannelService.class.getName());
   @Inject

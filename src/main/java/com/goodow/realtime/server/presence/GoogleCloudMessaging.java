@@ -26,6 +26,7 @@ import com.google.android.gcm.server.Sender;
 import com.google.api.server.spi.config.AnnotationBoolean;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
+import com.google.api.server.spi.config.ApiNamespace;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -61,7 +62,7 @@ import javax.inject.Named;
  * the documentation.
  */
 @Singleton
-@Api(name = "presence", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE)
+@Api(name = "presence", version = RealtimeApisModule.DEFAULT_VERSION, defaultVersion = AnnotationBoolean.TRUE, namespace = @ApiNamespace(ownerDomain = "goodow.com", ownerName = "Goodow", packagePath = "api.services"))
 // NO AUTHENTICATION; OPEN ENDPOINT!
 public class GoogleCloudMessaging implements MessageRouter {
   private static final Logger log = Logger.getLogger(GoogleCloudMessaging.class.getName());
