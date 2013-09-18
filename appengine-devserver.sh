@@ -1,4 +1,4 @@
-export DEV_SERVER=$HOME/.m2/repository/com/google/appengine/appengine-java-sdk/1.8.1.1/appengine-java-sdk/appengine-java-sdk-1.8.1.1/bin/dev_appserver.sh
+export DEV_SERVER=$HOME/.m2/repository/com/google/appengine/appengine-java-sdk/1.8.3/appengine-java-sdk/appengine-java-sdk-1.8.3/bin/dev_appserver.sh
 chmod 770 $DEV_SERVER
 $DEV_SERVER \
   --jvm_flag=-Dfile.encoding=UTF-8 \
