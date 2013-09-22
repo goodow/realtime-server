@@ -3,4 +3,5 @@ chmod 770 $DEV_SERVER
 $DEV_SERVER \
   --jvm_flag=-Dfile.encoding=UTF-8 \
   --disable_update_check --address=0.0.0.0 \
-  target/realtime-server-appengine-0.3.0-SNAPSHOT
+  target/realtime-server-appengine-0.3.0-SNAPSHOT \
+  2>&1 | tee target/realtime-server-appengine-0.3.0-SNAPSHOT/log.txt
