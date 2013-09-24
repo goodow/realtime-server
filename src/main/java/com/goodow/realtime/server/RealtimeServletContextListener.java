@@ -19,10 +19,17 @@ import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.walkaround.wave.server.GuiceSetup;
 
 public class RealtimeServletContextListener extends GuiceServletContextListener {
+  private static Injector injector;
+
+  public static final Injector getInstance() {
+    return injector;
+  }
 
   @Override
   protected Injector getInjector() {
-    return Guice.createInjector(new RealtimeApisModule(), new RealtimeServerModule(), GuiceSetup
-        .getRootModule(), GuiceSetup.getServletModule(), new AppEngineModule());
+    injector =
+        Guice.createInjector(new RealtimeApisModule(), new RealtimeServerModule(), GuiceSetup
+            .getRootModule(), GuiceSetup.getServletModule(), new AppEngineModule());
+    return injector;
   }
 }

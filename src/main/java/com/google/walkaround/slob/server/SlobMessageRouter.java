@@ -16,6 +16,7 @@ package com.google.walkaround.slob.server;
 
 import com.goodow.realtime.channel.constant.MessageType;
 import com.goodow.realtime.channel.constant.Platform;
+import com.goodow.realtime.server.RealtimeServletContextListener;
 import com.goodow.realtime.server.model.ObjectId;
 import com.goodow.realtime.server.model.Session;
 import com.goodow.realtime.server.presence.MessageRouter;
@@ -23,8 +24,14 @@ import com.goodow.realtime.server.presence.PresenceEndpoint;
 
 import com.google.appengine.api.channel.ChannelService;
 import com.google.appengine.api.memcache.Expiration;
+import com.google.appengine.api.taskqueue.DeferredTask;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.inject.Inject;
+import com.google.inject.Key;
 import com.google.inject.Provider;
+import com.google.inject.TypeLiteral;
 import com.google.walkaround.util.server.appengine.MemcacheTable;
 
 import java.util.Collections;
@@ -41,21 +48,42 @@ import java.util.logging.Logger;
  * information to allow clients to deal with these situations.
  */
 public class SlobMessageRouter {
+  static class PushNotify implements DeferredTask {
+    private static final long serialVersionUID = 252312117674297112L;
+    private static final String messageType = MessageType.REALTIME.key();
+    private static final Map<String, MessageRouter> messageRouters = RealtimeServletContextListener
+        .getInstance().getInstance(Key.get(new TypeLiteral<Map<String, MessageRouter>>() {
+        }));
+    private final String docId;
+    private final Platform platform;
+    private final String msg;
+
+    public PushNotify(String docId, String msg, Platform platform) {
+      this.docId = docId;
+      this.msg = msg;
+      this.platform = platform;
+    }
+
+    @Override
+    public void run() {
+      messageRouters.get("" + platform.prefix()).pushAll(docId, messageType, msg);
+    }
+  }
+
   private static final int ChannelExpirationSeconds = (int) (1.8 * 60 * 60);
-
   private static final Logger log = Logger.getLogger(SlobMessageRouter.class.getName());
-
+  static final String NOTIFICATIONS_QUEUE_NAME = "push-notifications";
+  private static final Queue QUEUE = QueueFactory.getQueue(NOTIFICATIONS_QUEUE_NAME);
   private static final String CLIENTS_MEMCACHE_TAG = "ORC";
   private final ChannelService channelService;
-  private final Map<String, MessageRouter> messageRouters;
   private final Provider<PresenceEndpoint> presence;
+
   private final MemcacheTable<String, String> clientTokens;
 
   @Inject
   public SlobMessageRouter(MemcacheTable.Factory memcacheFactory, ChannelService channelService,
-      Map<String, MessageRouter> messageRouters, Provider<PresenceEndpoint> presence) {
+      Provider<PresenceEndpoint> presence) {
     this.clientTokens = memcacheFactory.create(CLIENTS_MEMCACHE_TAG);
-    this.messageRouters = messageRouters;
     this.channelService = channelService;
     this.presence = presence;
   }
@@ -77,10 +105,11 @@ public class SlobMessageRouter {
    * Publishes messages to clients listening on an object.
    */
   public void publishMessages(ObjectId object, String jsonString) {
-    for (MessageRouter messageRouter : messageRouters.values()) {
-      messageRouter.pushAll(object.toString(), MessageType.REALTIME.key(), jsonString);
+    for (Platform platform : Platform.values()) {
+      DeferredTask notify = new PushNotify(object.toString(), jsonString, platform);
+      QUEUE.add(TaskOptions.Builder.withPayload(notify));
     }
-    log.info("Publishing " + object + " " + jsonString);
+    log.info("Scheduled push notifications: " + object + " " + jsonString);
   }
 
   private String tokenFor(Session session) {
