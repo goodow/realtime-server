@@ -76,19 +76,6 @@ public class DeviceEndpoint {
     return deviceinfo;
   }
 
-  @ApiMethod(name = "insertOrUpdateDeviceInfo")
-  public DeviceInfo insertOrUpdateDeviceInfo(
-      @Named("deviceRegistrationID") String deviceRegistrationID,
-      @Named("deviceInformation") String deviceInformation,
-      @Nullable @Named("timestamp") long timestamp) {
-    DeviceInfo deviceinfo = new DeviceInfo();
-    deviceinfo.setId(deviceRegistrationID);
-    deviceinfo.setInformation(deviceInformation);
-    deviceinfo.setTimestamp(timestamp);
-    em.get().persist(deviceinfo);
-    return deviceinfo;
-  }
-
   /**
    * This method lists all the entities inserted in datastore. It uses HTTP GET method and paging
    * support.

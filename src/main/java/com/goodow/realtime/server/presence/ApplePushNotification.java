@@ -13,7 +13,6 @@
  */
 package com.goodow.realtime.server.presence;
 
-import com.goodow.realtime.channel.constant.MessageType;
 import com.goodow.realtime.channel.constant.Platform;
 import com.goodow.realtime.server.RealtimeApisModule;
 
@@ -24,7 +23,6 @@ import com.google.api.server.spi.config.ApiNamespace;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.PayloadBuilder;
@@ -64,8 +62,7 @@ public class ApplePushNotification implements MessageRouter {
     if (subscriptions == null || subscriptions.isEmpty()) {
       return;
     }
-    PayloadBuilder payloadBuilder =
-        APNS.newPayload().customField(MessageType.valueOf(messageType).key(), message);
+    PayloadBuilder payloadBuilder = APNS.newPayload().customField(messageType, message);
     log.info("payload length:" + payloadBuilder.length());
     String payload = payloadBuilder.build();
     for (String subscription : subscriptions) {

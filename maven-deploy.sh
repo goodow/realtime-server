@@ -1,4 +1,4 @@
-mvn appengine:endpoints_get_client_lib
+mvn appengine:endpoints_get_discovery_doc appengine:endpoints_get_client_lib
 cd target/generated-sources/appengine-endpoints/WEB-INF/
 # unzip -q `ls | grep zip`
 rm -rf device
